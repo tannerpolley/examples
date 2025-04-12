@@ -35,6 +35,12 @@ sphinx:
   # FIXME change `url` and `branch` before merging PR
   url: https://github.com/lbianchi-lbl/examples
   branch: binder
+
 launch_buttons:
+  thebe: true
   notebook_interface: jupyterlab
   binderhub_url: https://mybinder.org
+
+interactive:
+  enabled: true
+  use_thebe: true
