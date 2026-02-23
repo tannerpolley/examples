@@ -288,7 +288,7 @@ if __name__ == "__main__":
     )
 
     assert value(m.fs.H101.outlet.temperature[0]) == pytest.approx(500, abs=1e-3)
-    # assert value(m.fs.R101.outlet.temperature[0]) == pytest.approx(862.907, abs=1e-3)
+    assert value(m.fs.R101.outlet.temperature[0]) == pytest.approx(775.939, abs=1e-3)
     assert value(m.fs.F101.vap_outlet.temperature[0]) == pytest.approx(
         301.881, abs=1e-3
     )
