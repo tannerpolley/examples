@@ -210,18 +210,16 @@ if __name__ == "__main__":
 
     m.fs.H101.outlet.temperature.unfix()
     m.fs.R101.heat_duty.unfix()
+    m.fs.R101.outlet.temperature.fix(600)
     m.fs.F101.vap_outlet.temperature.unfix()
     m.fs.F102.vap_outlet.temperature.unfix()
 
     m.fs.F102.deltaP.unfix()
 
-    assert degrees_of_freedom(m) == 5
+    assert degrees_of_freedom(m) == 4
 
     m.fs.H101.outlet.temperature[0].setlb(500)
     m.fs.H101.outlet.temperature[0].setub(600)
-
-    m.fs.R101.outlet.temperature[0].setlb(600)
-    m.fs.R101.outlet.temperature[0].setub(800)
 
     m.fs.F101.vap_outlet.temperature[0].setlb(298.0)
     m.fs.F101.vap_outlet.temperature[0].setub(450.0)
@@ -278,7 +276,7 @@ if __name__ == "__main__":
 
     H101 outlet temperature = {value(m.fs.H101.outlet.temperature[0]):.3f} K
 
-    R101 outlet temperature = {value(m.fs.R101.outlet.temperature[0]):.3f} K
+    R101 heat duty = {value(m.fs.R101.heat_duty[0]):.3f} J
 
     F101 outlet temperature = {value(m.fs.F101.vap_outlet.temperature[0]):.3f} K
 
@@ -288,7 +286,7 @@ if __name__ == "__main__":
     )
 
     assert value(m.fs.H101.outlet.temperature[0]) == pytest.approx(500, abs=1e-3)
-    assert value(m.fs.R101.outlet.temperature[0]) == pytest.approx(775.9, abs=1e-1)
+    assert value(m.fs.R101.heat_duty[0]) == pytest.approx(-13766.243, abs=1e-3)
     assert value(m.fs.F101.vap_outlet.temperature[0]) == pytest.approx(
         301.881, abs=1e-3
     )
