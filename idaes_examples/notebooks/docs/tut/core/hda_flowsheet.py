@@ -276,7 +276,7 @@ if __name__ == "__main__":
 
     H101 outlet temperature = {value(m.fs.H101.outlet.temperature[0]):.3f} K
 
-    R101 heat duty = {value(m.fs.R101.heat_duty[0]):.3f} J
+    R101 heat duty = {value(m.fs.R101.heat_duty[0]):.3f} W
 
     F101 outlet temperature = {value(m.fs.F101.vap_outlet.temperature[0]):.3f} K
 
