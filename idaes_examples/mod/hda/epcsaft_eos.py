@@ -4,9 +4,15 @@ Every thermodynamic value (phase molar density, total molar enthalpy on the NASA
 formation basis at 1 bar, component ln(phi_i)) comes from the installed Engine
 wheel's ASL callback ``epcsaft_pressure_property`` with exact first and second
 derivatives. This module only maps IDAES variables to the callback arguments and
-assembles ln(f_i / P_ref) = ln x_i + ln(P / P_ref) + ln(phi_i), as the IDAES cubic
-EoS does. Liquid requests take the highest mechanically stable density root and
+assembles ln(f_i / P_ref) = ln x_i + ln(P / P_ref) + ln(phi_i) for the equilibrium
+(condensable) components. ln x_i is taken directly on the IDAES mole fraction rather than
+through IDAES's log_mole_frac_* variables: those are built for every component, and for a
+vanishing vapor-only fraction (hydrogen and methane in F102) their exp(ln x) = x rows
+are singular. Liquid requests take the highest mechanically stable density root and
 vapor requests the lowest; a single stable root is returned for either request.
+A component absent from a phase (vapor-only hydrogen and methane in the liquid) enters
+that phase's call as the constant weight 0.0; the callback returns the exact
+infinite-dilution limit there.
 """
 
 import json
@@ -24,7 +30,7 @@ PARAMETERS = INPUTS / "hda-pc-saft.json"
 NASA9 = INPUTS / "nasa9-records.json"
 COMPONENTS = ("hydrogen", "methane", "benzene", "toluene")  # fixed callback order
 LIBRARY = str(Path(epcsaft.__file__).parent / "libepcsaft_asl.so")
-X_MIN = 1e-12  # callback domain: every composition weight >= 1e-12, no clipping
+X_MIN = 1e-12  # audit floor for declared phase fractions (issue numerical checks)
 OBSERVABLES = {  # IDAES name -> (callback observable, result units)
     "dens": ("molar_density", pyunits.mol / pyunits.m**3),
     "enth": ("enthalpy", pyunits.J / pyunits.mol),
@@ -59,18 +65,20 @@ def _phase(b, p):
 
 
 def _call(b, kind, p, T, P, x, j="-"):
-    """One callback term; x maps component name -> mole-fraction expression."""
+    """One callback term; x maps component name -> mole-fraction expression.
+
+    Weights are the IDAES mole fractions (bounded >= 0 by IDAES), unclipped; a component
+    not valid in phase p, or absent from the package (the benzene/toluene binary), enters
+    as the constant 0.0.
+    """
     f = getattr(b.params, "_epcsaft_" + kind)
-    for c in COMPONENTS:
-        if hasattr(x[c], "setlb"):  # the callback consumes this variable: enforce its domain
-            x[c].setlb(X_MIN)
+    w = [x[c] if (p, c) in b.phase_component_set else 0.0 for c in COMPONENTS]
     comp = j if j == "-" else str(COMPONENTS.index(j))
-    return f(T, P, *(x[c] for c in COMPONENTS), b.params._epcsaft_record,
-             OBSERVABLES[kind][0], comp, _phase(b, p))
+    return f(T, P, *w, b.params._epcsaft_record, OBSERVABLES[kind][0], comp, _phase(b, p))
 
 
 def _phase_x(b, p):
-    return {c: b.mole_frac_phase_comp[p, c] for c in COMPONENTS}
+    return {c: b.mole_frac_phase_comp[p, c] for c in b.component_list if (p, c) in b.phase_component_set}
 
 
 def _log_fug_bubble_dew(b, p, j, pp, pt_var):
@@ -80,11 +88,10 @@ def _log_fug_bubble_dew(b, p, j, pp, pt_var):
     abbrv = name[0] + ("bub" if name.endswith("bubble") else "dew")
     incipient = b.params.get_phase(p).is_vapor_phase() == abbrv.endswith("bub")
     if incipient:  # vapor at a bubble point, liquid at a dew point
-        mf, log_mf = getattr(b, "_mole_frac_" + abbrv), getattr(b, "log_mole_frac_" + abbrv)
-        x, log_xj = {c: mf[pp, c] for c in COMPONENTS}, log_mf[pp, j]
+        x = {c: getattr(b, "_mole_frac_" + abbrv)[pp, c] for c in b.component_list}
     else:
-        x, log_xj = {c: b.mole_frac_comp[c] for c in COMPONENTS}, b.log_mole_frac_comp[j]
-    return log_xj + log(P / b.params.pressure_ref) + _call(b, "lnphi", p, T, P, x, j)
+        x = {c: b.mole_frac_comp[c] for c in b.component_list}
+    return log(x[j]) + log(P / b.params.pressure_ref) + _call(b, "lnphi", p, T, P, x, j)
 
 
 class EPCSAFT(EoSBase):
@@ -95,8 +102,8 @@ class EPCSAFT(EoSBase):
         pb = b.parent_block()
         if hasattr(pb, "_epcsaft_record"):
             return
-        if tuple(pb.component_list) != COMPONENTS:
-            raise ValueError(f"ePC-SAFT HDA callback requires components {COMPONENTS}")
+        if not set(pb.component_list) <= set(COMPONENTS):
+            raise ValueError(f"ePC-SAFT HDA callback components are {COMPONENTS}")
         pb._epcsaft_record = epcsaft.eos.property_asl_record(mixture())
         arg_units = [pyunits.K, pyunits.Pa] + [pyunits.dimensionless] * 4 + [None] * 4
         for kind, (_, units) in OBSERVABLES.items():
@@ -123,7 +130,7 @@ class EPCSAFT(EoSBase):
     @staticmethod
     def log_fug_phase_comp_eq(b, p, j, pp):
         x = _phase_x(b, p)
-        return (b.log_mole_frac_phase_comp[p, j] + log(b.pressure / b.params.pressure_ref)
+        return (log(x[j]) + log(b.pressure / b.params.pressure_ref)
                 + _call(b, "lnphi", p, b._teq[pp], b.pressure, x, j))
 
     @staticmethod
@@ -150,14 +157,19 @@ def molar_masses():
     return [mw[c] for c in COMPONENTS]
 
 
-def audit_row(mix, T, P, x, y):
+def audit_row(mix, T, P, x, y, eq=(2, 3)):
     """Independent #73 audit of a declared liquid x / vapor y row at (T, P), public API only.
 
-    Rejects: fractions outside [1e-12, 1] or phase sums off by > 1e-10; unavailable roots; one
-    shared root; compositions closer than 1e-3 (trivial y = x branch); a declared liquid that is
-    not the denser phase by mass; max |ln x_i + ln phi_i^L - ln y_i - ln phi_i^V| > 1e-8.
+    x and y are full four-component vectors; eq indexes the equilibrium (condensable)
+    components, the only ones with fugacity-equality rows. Vapor-only hydrogen and methane
+    are exactly 0 in x and may vanish in y. Rejects: an equilibrium fraction outside
+    [1e-12, 1], any fraction outside [0, 1] or nonfinite, phase sums off by > 1e-10;
+    unavailable roots; one shared root; compositions closer than 1e-3 (trivial y = x
+    branch); a declared liquid that is not the denser phase by mass;
+    max over eq of |ln x_i + ln phi_i^L - ln y_i - ln phi_i^V| > 1e-8.
     """
-    row = {"fractions_ok": all(X_MIN <= v <= 1 for v in (*x, *y))
+    row = {"fractions_ok": all(X_MIN <= z[i] <= 1 for z in (x, y) for i in eq)
+           and all(0 <= v <= 1 for v in (*x, *y))
            and abs(sum(x) - 1) <= 1e-10 and abs(sum(y) - 1) <= 1e-10,
            "sum_error": max(abs(sum(x) - 1), abs(sum(y) - 1))}
     x, y = [v / sum(x) for v in x], [v / sum(y) for v in y]  # sums checked above; roots at normalized x
@@ -174,7 +186,7 @@ def audit_row(mix, T, P, x, y):
         mass_ordered=liq.molar_density * sum(a * m for a, m in zip(x, mw))
         > vap.molar_density * sum(a * m for a, m in zip(y, mw)),
         fugacity_residual=max(abs(math.log(x[i]) + liq.log_fugacity_coefficient[i] - math.log(y[i])
-                                  - vap.log_fugacity_coefficient[i]) for i in range(len(x))))
+                                  - vap.log_fugacity_coefficient[i]) for i in eq))
     checks = {"fractions": row["fractions_ok"], "distinct_root": not row["shared_root"],
               "composition_distance": row["composition_distance"] >= 1e-3,
               "mass_ordered": row["mass_ordered"], "residual": row["fugacity_residual"] <= 1e-8}

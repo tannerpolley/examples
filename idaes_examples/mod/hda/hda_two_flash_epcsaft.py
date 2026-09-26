@@ -7,29 +7,41 @@ objective with overhead-loss, benzene-production and purity constraints.
 
 import time
 
-from pyomo.environ import (ConcreteModel, Constraint, Expression, Objective, TransformationFactory,
-                           Var, value)
+from pyomo.environ import (ConcreteModel, Constraint, Expression, Objective, Param,
+                           TransformationFactory, Var, units as pyunits, value)
 from pyomo.network import Arc
 from idaes.core import FlowsheetBlock
 from pyomo.contrib.solver.common.results import SolutionStatus
 from pyomo.contrib.solver.solvers.ipopt import Ipopt
+import idaes.core.util.scaling as iscale
 from idaes.core.util.model_statistics import degrees_of_freedom
 from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
 from idaes.models.properties.modular_properties.base.generic_reaction import (
     GenericReactionParameterBlock)
 from idaes.models.unit_models import (Feed, Flash, Heater, Mixer, PressureChanger, Product,
                                       Separator, StoichiometricReactor)
+from idaes.models.unit_models.separator import EnergySplittingType
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 
 from idaes_examples.mod.hda import hda_epcsaft_VLE, hda_ideal_VLE_modular
+from idaes_examples.mod.hda.hda_epcsaft_VLE import NONCONDENSABLE
 from idaes_examples.mod.hda.hda_flowsheet_extras import fix_inlet_states, manual_propagation
 from idaes_examples.mod.hda.hda_reaction_modular import reaction_config
 
 COMPONENTS = ("hydrogen", "methane", "benzene", "toluene")
+PP = ("Vap", "Liq")
+SMOOTHING_DEFAULTS = {"eps_1": 0.01, "eps_2": 0.0005}  # K, IDAES 2.12 SmoothVLE defaults
+UNIT_SCALES = ((pyunits.K, 300.0), (pyunits.Pa, 1e5), (pyunits.mol / pyunits.s, 1.0),
+               (pyunits.W, 1e4), (pyunits.dimensionless, 1.0),  # issue #73 fixed KKT scales
+               (pyunits.J / pyunits.mol, 1e4))  # the issue's enthalpy comparison scale
+OBJECTIVE_SCALE = 1e5  # USD/yr
 STARTS = ((550, 325, 375, 107500), (500, 300, 350, 105000), (600, 400, 425, 110000))
 SOLVER_OPTIONS = {"nlp_scaling_method": "user-scaling", "ma57_automatic_scaling": "yes",
-                  "max_iter": 1000, "tol": 1e-8, "bound_relax_factor": 0.0,
-                  "linear_solver": "ma57"}
+                  "max_iter": 1000, "tol": 1e-8, "bound_relax_factor": 0.0, "linear_solver": "ma57"}
+# ePC-SAFT: primal residuals to 1e-9 in the unit-scaled model (1e-5 W, 1e-4 Pa; the callback's
+# ln(phi) precision floor is ~1e-10), and the adaptive barrier update: the fixed update stalls
+# with mu = 0.1 while smoothing- and eps-sized phase amounts sit next to their zero bounds.
+EPCSAFT_OPTIONS = {**SOLVER_OPTIONS, "constr_viol_tol": 1e-9, "mu_strategy": "adaptive"}
 
 
 def build(package="ideal"):
@@ -49,8 +61,12 @@ def build(package="ideal"):
                                     has_heat_of_reaction=package == "ideal", has_heat_transfer=True,
                                     has_pressure_change=False)
     fs.F101 = Flash(property_package=props, has_heat_transfer=True, has_pressure_change=True)
+    # ePC-SAFT: the splitter conserves energy exactly (equal molar enthalpy). With equal
+    # temperature its re-flashed saturated outlets differ from the inlet by the O(eps_2)
+    # SmoothVLE liquid (0.05 W at the default width) and IDAES writes no splitter energy balance.
+    split = {} if package == "ideal" else {"energy_split_basis": EnergySplittingType.equal_molar_enthalpy}
     fs.S101 = Separator(property_package=props, ideal_separation=False,
-                        outlet_list=["purge", "recycle"])
+                        outlet_list=["purge", "recycle"], **split)
     fs.C101 = PressureChanger(property_package=props, compressor=True,
                               thermodynamic_assumption=ThermodynamicAssumption.isothermal)
     fs.F102 = Flash(property_package=props, has_heat_transfer=True, has_pressure_change=True)
@@ -85,7 +101,59 @@ def build(package="ideal"):
     fs.objective = Objective(expr=fs.operating_cost)
     for c in (fs.overhead_loss, fs.product_flow, fs.product_purity, fs.objective):
         c.deactivate()
+    if package == "epcsaft":
+        _epcsaft_numerics(m)
     return m
+
+
+def _epcsaft_numerics(m):
+    """Scaling, trace-flow placeholders and bounds for the interior-point solve with ePC-SAFT."""
+    fs = m.fs
+    set_unit_scaling(m)
+    # An ideal-separation outlet carries the absent phase at eps_flow (IDAES: 1e-8 mol/s, a ~1e-3 W
+    # leak). F101: 1e-9 keeps the hydrogen/methane fractions of the F102 train near 1e-9, inside
+    # their 1e-20 bounds (at 0 the balances force them below the bound and the bound multipliers
+    # diverge). F102: 0, since a second leak would put the liquid product's hydrogen near 1e-17,
+    # below double-precision resolution; those two fractions are exactly 0 (bound 0).
+    fs.F101.split.eps_flow.set_value(1e-9)
+    fs.F102.split.eps_flow.set_value(0.0)
+    for c in NONCONDENSABLE:
+        fs.P102.properties[0].mole_frac_comp[c].setlb(0.0)
+    # bound_relax_factor = 0 keeps every composition weight inside the callback domain. Phase flows
+    # and fractions are never callback inputs; they get Ipopt's default 1e-8 lower-bound relaxation
+    # explicitly, because SmoothVLE leaves superheated streams a liquid of O(eps_2^2 / (T - T_dew))
+    # (1e-19 to 1e-11 mol/s) whose hard zero bound makes the barrier multipliers diverge.
+    for var in m.component_objects(Var, descend_into=True):
+        if var.local_name in ("flow_mol_phase", "phase_frac"):
+            for v in var.values():
+                v.setlb(-1e-8)
+
+
+def unit_scale(expr):
+    """Fixed scale of a variable or constraint body from its physical units; None if unclassified."""
+    try:
+        u = pyunits.get_units(expr)
+    except Exception:
+        return None
+    u = pyunits.dimensionless if u is None else u
+    for ref, s in UNIT_SCALES:
+        try:
+            if abs(pyunits.convert_value(1.0, from_units=u, to_units=ref) - 1.0) < 1e-12:
+                return s
+        except Exception:
+            continue
+    return None
+
+
+def set_unit_scaling(m):
+    """Scaling factors 1/scale for every variable and constraint from its units, and 1e-5 for the
+    objective: the fixed scales of the issue's KKT evidence, used by the scaled NL writer."""
+    for obj in (*m.component_data_objects(Var, descend_into=True),
+                *m.component_data_objects(Constraint, descend_into=True)):
+        s = unit_scale(obj if obj.ctype is Var else obj.body)
+        if s is not None:
+            iscale.set_scaling_factor(obj, 1.0 / s)
+    iscale.set_scaling_factor(m.fs.objective, 1.0 / OBJECTIVE_SCALE)
 
 
 def decisions(m):
@@ -121,17 +189,36 @@ def set_optimization(m):
     assert degrees_of_freedom(m) == 4
 
 
+def set_smoothing(m, factor):
+    """Scale every SmoothVLE width (eps_1 for T_bub, eps_2 for T_dew) from the IDAES default."""
+    for prm in m.component_objects(Param, descend_into=True):  # scalar Params holding a default
+        for eps, default in SMOOTHING_DEFAULTS.items():
+            if prm.local_name.startswith(eps + "_"):
+                prm.set_value(default * factor)
+
+
 def initialize_ideal(m):
     tear_guesses = fix_inlet_states(m)
     fix_simulation(m)
     manual_propagation(m, tear_guesses)
 
 
+def initialize_from(m, ref):
+    """Start an ePC-SAFT flowsheet from a solved flowsheet `ref` with the same state definition
+    (the ideal baseline): every same-named variable takes the reference value (states, phase
+    splits, dew points, _teq, unit variables), and the feeds are fixed as in the tutorial."""
+    for v in m.component_data_objects(Var, descend_into=True):
+        r = ref.find_component(v.name)
+        if r is not None and not v.fixed and r.value is not None:
+            v.set_value(r.value)
+    fix_inlet_states(m)
+
+
 def solve(m, tee=False):
     """IDAES ipopt_v2 settings (scaled NL writer, linear presolve, MA57); returns solver evidence."""
     t0 = time.perf_counter()
     res = Ipopt().solve(m, tee=tee, load_solutions=False, raise_exception_on_nonoptimal_result=False,
-                        solver_options=SOLVER_OPTIONS,
+                        solver_options=SOLVER_OPTIONS if m.package == "ideal" else EPCSAFT_OPTIONS,
                         writer_config={"scale_model": True, "linear_presolve": True})
     wall = time.perf_counter() - t0
     if res.solution_status != SolutionStatus.noSolution:
