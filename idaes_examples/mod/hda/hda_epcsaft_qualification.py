@@ -26,7 +26,8 @@ from idaes_examples.mod.hda.hda_epcsaft_VLE import thermo_config
 RESULTS = Path(__file__).resolve().parents[3] / "hda_epcsaft_results"
 PP = ("Vap", "Liq")
 SUBPROBLEM = {"bub": ("temperature_bubble", "tbub"), "dew": ("temperature_dew", "tdew")}
-GUESS = {"bub": (0.97, 0.03, 1e-6, 1e-6), "dew": (1e-4, 1e-3, 0.5, 0.4989)}  # incipient phase
+GUESSES = {"bub": ((0.999, 1e-3, 1e-8, 1e-8), (0.5, 0.3, 0.1, 0.1)),  # incipient vapor: light, mixed
+           "dew": ((1e-4, 1e-3, 0.5, 0.4989),)}  # incipient liquid: aromatic
 
 
 def state_block(T, P, z):
@@ -86,13 +87,13 @@ def bubble_dew_rows(mix, streams):
     rows = []
     for name, (T, P, z) in streams.items():
         for kind, (tvar, abbrv) in SUBPROBLEM.items():
-            for T0 in (150, 210, 250, 300, 350, 400, 450):
+            for T0, guess in ((T0, g) for T0 in (80, 120, 160, 210, 300, 400) for g in GUESSES[kind]):
                 m, sb = state_block(T, P, z)
                 keep = {f"eq_{tvar}", f"eq_mole_frac_{abbrv}", f"log_mole_frac_{abbrv}_eqn", "log_mole_frac_comp_eqn"}
                 for con in m.component_objects(Constraint, descend_into=True):
                     con.activate() if con.local_name in keep else con.deactivate()
                 getattr(sb, tvar)[PP].set_value(T0)
-                for c, g in zip(COMPONENTS, GUESS[kind]):
+                for c, g in zip(COMPONENTS, guess):
                     getattr(sb, "_mole_frac_" + abbrv)[PP, c].set_value(g)
                     getattr(sb, "log_mole_frac_" + abbrv)[PP, c].set_value(math.log(g))
                 res = flowsheet.solve(m)
@@ -101,7 +102,7 @@ def bubble_dew_rows(mix, streams):
                 x, y = (z, inc) if kind == "bub" else (inc, z)
                 audit = audit_row(mix, Tsol, P, x, y) if res["termination"] == "convergenceCriteriaSatisfied" else {}
                 print(name, kind, T0, res["termination"], round(Tsol, 3), audit.get("reason"), flush=True)
-                rows.append({"stream": name, "kind": kind, "T_stream_K": T, "P_Pa": P, "T_start_K": T0,
+                rows.append({"stream": name, "kind": kind, "T_stream_K": T, "P_Pa": P, "T_start_K": T0, "incipient_guess": guess,
                              "termination": res["termination"], "T_solution_K": Tsol,
                              "in_stream_envelope": 298 <= Tsol <= 800, **audit})
     return rows
@@ -140,7 +141,7 @@ def ideal_streams(m):
     fs = m.fs
     blocks = {"gas_feed": fs.I102.properties[0], "liquid_feed": fs.I101.properties[0],
               "M101_out": fs.M101.mixed_state[0], "R101_out": fs.R101.control_volume.properties_out[0],
-              "F101_vapor": fs.S101.mixed_state[0], "F101_liquid": fs.F102.control_volume.properties_in[0],
+              "F101_vapor": fs.S101.mixed_state[0], "F102_feed": fs.F102.control_volume.properties_in[0],
               "F102_vapor": fs.P101.properties[0], "F102_liquid": fs.P102.properties[0]}
     out = {}
     for k, b in blocks.items():

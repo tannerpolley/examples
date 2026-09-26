@@ -1,0 +1,45 @@
+stream,T_K,accepted_min_P_bub_Pa,last_reason
+gas_feed,20,,exception: boundary seed has no density root: density domain is empty
+gas_feed,30,,exception: boundary seed has no density root: density domain is empty
+gas_feed,50,,exception: boundary seed has no density root: no stable density root (count 0)
+gas_feed,80,,exception: boundary seed has no density root: no stable density root (count 0)
+gas_feed,110,,exception: boundary seed has no density root: no stable density root (count 0)
+gas_feed,140,,"infeasible: residual 0.0027104303598709779 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 44 iterations, contraction absen"
+gas_feed,170,,"infeasible: residual 0.0047697493612051632 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 57 iterations, contraction absen"
+gas_feed,200,,"infeasible: residual 0.0084932610228925284 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 123 iterations, contraction abse"
+gas_feed,250,,phases_coincide: phase distance between L and V is too small: 0.000000
+gas_feed,300,,phases_coincide: phase distance between L and V is too small: 0.000000
+gas_feed,350,,phases_coincide: phase distance between L and V is too small: 0.000000
+M101_out,20,,exception: boundary seed has no density root: no stable density root (count 0)
+M101_out,30,,exception: boundary seed has no density root: no stable density root (count 0)
+M101_out,50,,"infeasible: residual 0.14025887253362676 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 56 iterations, contraction absent,"
+M101_out,80,,phases_coincide: phase distance between L and V is too small: 0.000000
+M101_out,110,,phases_coincide: phase distance between L and V is too small: 0.000000
+M101_out,140,,"infeasible: residual 0.15380019401365894 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 73 iterations, contraction absent,"
+M101_out,170,,"infeasible: residual 0.06848955610624903 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 81 iterations, contraction absent,"
+M101_out,200,,phases_coincide: phase distance between L and V is too small: 0.000000
+M101_out,250,,phases_coincide: phase distance between L and V is too small: 0.000000
+M101_out,300,183541753.1360726,
+M101_out,350,126590354.7311193,
+R101_out,20,,exception: boundary seed has no density root: no stable density root (count 0)
+R101_out,30,,exception: boundary seed has no density root: no stable density root (count 0)
+R101_out,50,,"infeasible: residual 0.1574733979824138 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 46 iterations, contraction absent, "
+R101_out,80,,"infeasible: residual 0.13568256339535806 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 71 iterations, contraction absent,"
+R101_out,110,,"infeasible: residual 0.14568170097906527 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 53 iterations, contraction absent,"
+R101_out,140,,"infeasible: residual 0.052380331894767193 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 117 iterations, contraction absen"
+R101_out,170,,phases_coincide: phase distance between L and V is too small: 0.000000
+R101_out,200,,"budget_exhausted: residual 0.49525455028500787 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 200 iterations, contraction "
+R101_out,250,,phases_coincide: phase distance between L and V is too small: 0.000000
+R101_out,300,106711235.13404879,
+R101_out,350,77584386.02783975,
+F101_vapor,20,,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,30,,"infeasible: residual 0.062755036169112627 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 38 iterations, contraction absent"
+F101_vapor,50,,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,80,14228816.83735059,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,110,21738950.560914278,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,140,29584162.00107421,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,170,,"budget_exhausted: residual 0.0028761166381236327 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 200 iterations, contractio"
+F101_vapor,200,,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,250,,"infeasible: residual 1.3351306458039633e-09 against EQUILIBRIUM_ROW_RESIDUAL 1e-10 after 177 iterations, contraction abs"
+F101_vapor,300,,phases_coincide: phase distance between L and V is too small: 0.000000
+F101_vapor,350,,phases_coincide: phase distance between L and V is too small: 0.000000
