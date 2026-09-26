@@ -2,7 +2,7 @@
 
 Writes hda_epcsaft_results/: IDAES-vs-public property transport, the callback temperature
 domain, LogBubbleDew bubble/dew solves on single ePC-SAFT state blocks at the ideal-baseline
-stream compositions (audited), an Engine equilibrium-driver bubble-pressure diagnostic, and
+stream compositions (audited), the bubble sum sum(K_i z_i) at each stream pressure, and
 the corrected ideal-baseline simulation/optimization.
 Run: python -m idaes_examples.mod.hda.hda_epcsaft_qualification
 """
@@ -14,7 +14,6 @@ import math
 from pathlib import Path
 
 import epcsaft
-from epcsaft.equilibrium import Free, MoleFractions, Phase, Pinned, Problem, solve_equilibrium
 from pyomo.environ import ConcreteModel, Constraint, value
 from idaes.core import FlowsheetBlock
 from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
@@ -108,31 +107,31 @@ def bubble_dew_rows(mix, streams):
     return rows
 
 
-def engine_bubble_rows(mix, streams):
-    """Diagnostic only (never the IDAES path): Engine-driver bubble pressure at fixed T, audited."""
+def bubble_sum_rows(mix, streams):
+    """Decisive bubble test at the stream pressure: with the liquid at the stream composition z,
+    converge the incipient vapor by successive substitution, y_i ~ z_i exp(ln phi_i^L - ln phi_i^V(y)),
+    and record S = sum_i K_i z_i. S > 1 means the liquid is unstable to that vapor at T (the bubble
+    temperature, if any, is where S = 1); S > 1 at every T means no bubble temperature exists."""
     rows = []
-    for name, (_, _, z) in streams.items():
-        for T in (20, 30, 50, 80, 110, 140, 170, 200, 250, 300, 350):
-            best, reason = None, ""
-            for yh in (0.999, 0.99, 0.9, 0.6):
-                for p0 in (1e6, 5e6, 2e7, 5e7):
-                    guess = [yh, 0.9 * (1 - yh), 0.05 * (1 - yh), 0.05 * (1 - yh)]
-                    problem = Problem(phases=[Phase("L", kind="liquid", composition_guess=list(z)),
-                                              Phase("V", kind="vapor", amount=Pinned(0.0), composition_guess=guess)],
-                                      T=T, P=Free(p0), feed=MoleFractions(dict(zip(COMPONENTS, z))))
-                    try:
-                        r = solve_equilibrium(mix, problem)
-                    except Exception as err:
-                        reason = f"exception: {err}"[:120]
-                        continue
-                    if not r.success:
-                        reason = r.message[:120]
-                        continue
-                    a = audit_row(mix, T, r.pressure[0], list(r.mole_fractions[:4]), list(r.mole_fractions[4:]))
-                    reason = a["reason"]
-                    if a["accepted"] and (best is None or r.pressure[0] < best):
-                        best = r.pressure[0]
-            rows.append({"stream": name, "T_K": T, "accepted_min_P_bub_Pa": best, "last_reason": reason})
+    for name, (_, P, z) in streams.items():
+        for T in (12, 15, 20, 25, 30, 40, 60, 80, 100, 120, 150, 180, 210, 240, 270, 300):
+            row = {"stream": name, "T_K": T, "P_Pa": P}
+            try:
+                liquid = mix.state(T, P=P, x=list(z), phase="liquid")
+                y = [0.99, 0.0099, 5e-5, 5e-5]  # hydrogen-rich start: y = z is the trivial fixed point
+                for _ in range(200):
+                    vapor = mix.state(T, P=P, x=y, phase="vapor")
+                    k = [math.exp(a - b) for a, b in zip(liquid.log_fugacity_coefficient, vapor.log_fugacity_coefficient)]
+                    total = sum(ki * zi for ki, zi in zip(k, z))
+                    new = [max(ki * zi / total, 1e-300) for ki, zi in zip(k, z)]
+                    if max(abs(a - b) for a, b in zip(new, y)) < 1e-12:
+                        break
+                    y = new
+                row.update({"sum_Kz": total, "y_H2": y[0], "rho_liquid": liquid.molar_density, "rho_vapor": vapor.molar_density,
+                            "liquid_roots": liquid.stable_root_count, "trivial": max(abs(a - b) for a, b in zip(y, z)) < 1e-3})
+            except Exception as err:  # retained: no density root at this T and P
+                row["reason"] = str(err)[:120]
+            rows.append(row)
     return rows
 
 
@@ -153,7 +152,7 @@ def ideal_streams(m):
 def write_csv(name, rows):
     keys = list(dict.fromkeys(k for r in rows for k in r))
     with open(RESULTS / name, "w", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=keys)
+        writer = csv.DictWriter(fh, fieldnames=keys, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -171,7 +170,7 @@ def main():
     write_csv("callback_domain.csv", callback_domain_rows())
     write_csv("bubble_dew_idaes.csv", bubble_dew_rows(mix, streams))
     h2_rich = {k: v for k, v in streams.items() if v[2][0] > 0.05}
-    write_csv("bubble_pressure_engine_diagnostic.csv", engine_bubble_rows(mix, h2_rich))
+    write_csv("bubble_sum_at_stream_pressure.csv", bubble_sum_rows(mix, h2_rich))
     wheel = json.loads(next(Path(epcsaft.__file__).parent.parent.glob("epcsaft-*.dist-info"))
                        .joinpath("direct_url.json").read_text())["url"].removeprefix("file://")
     meta = {"wheel": wheel, "wheel_sha256": sha(wheel), "asl_library_sha256": sha(LIBRARY), "parameters_sha256": sha(PARAMETERS),

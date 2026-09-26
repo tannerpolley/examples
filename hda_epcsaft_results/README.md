@@ -21,9 +21,9 @@ input-file SHA-256 values, and the proxy stream states.
   stream compositions. Each converged row is audited with the public API: fractions and sums,
   distinct roots, composition distance of at least 1e-3, the declared liquid having the higher
   mass density, and fugacity residual <= 1e-8.
-- `bubble_pressure_engine_diagnostic.csv`: a diagnostic only, never used by the IDAES path.
-  The Engine equilibrium driver computes the bubble pressure of the hydrogen-rich compositions
-  at fixed temperature, and each result passes the same audit.
+- `bubble_sum_at_stream_pressure.csv`: the bubble test S = sum K_i z_i at each hydrogen-rich
+  stream's pressure, from 12 to 300 K, with the incipient vapor converged by successive
+  substitution through the public API.
 
 All files come from one fresh process on the final Engine wheel:
 - wheel SHA-256 `60b15ce85a065fdbc98d40c9597f6e93775d39fbefd613866410804287dd9854`
@@ -61,19 +61,25 @@ and F101 vapor.
   also cryogenic, below the methane triple point.
 - The failure is not a 200 K floor: starts at 80-160 K reach the same outcomes.
 
-**Engine equilibrium driver (`bubble_pressure_engine_diagnostic.csv`, diagnostic only).**
-Bubble pressure was computed at fixed T from 20 to 350 K. Accepted rows appear only at pressures
-far above the stream pressure (0.35 MPa):
+**Bubble sum at the stream pressure (`bubble_sum_at_stream_pressure.csv`).** With the liquid
+at the stream composition z and 0.35 MPa, the incipient vapor is converged by successive
+substitution from a hydrogen-rich start, and S = sum K_i z_i is recorded from 12 to 300 K.
+S > 1 means the liquid is unstable to that vapor; a bubble temperature needs S = 1.
 
-| Composition | Accepted bubble pressure |
-|---|---|
-| M101 outlet | 184 MPa at 300 K, 127 MPa at 350 K |
-| R101 outlet | 107 MPa at 300 K, 78 MPa at 350 K |
-| F101 vapor | 14 MPa at 80 K, 22 MPa at 110 K, 30 MPa at 140 K |
-| Gas feed | none |
+| Stream | S where a liquid-like root exists | Higher temperatures |
+|---|---|---|
+| M101 outlet (28 % H2) | 78 to 2.9e9 (12-210 K) | only one gas-like root (240-300 K) |
+| R101 outlet / F101 feed (16 % H2) | 34 to 5.8e9 (12-240 K) | only one gas-like root (270-300 K) |
+| F101 vapor (19 % H2) | 28 to 8.7e4 (12-180 K) | only one gas-like root (210-300 K) |
 
-A liquid holding 16-94 % dissolved hydrogen needs tens of MPa of hydrogen, so no bubble
-temperature exists at 0.35 MPa.
+So these process streams have no bubble temperature at their pressure: dissolving 16-28 % H2
+needs tens of MPa of hydrogen (the retained H2/CH4 observations show x_H2 = 0.12-0.19 only at
+8-10 MPa). The gas feed (94 % H2) is gas-like above 40 K; below it, hydrogen condensation near its
+33 K critical point dominates. Its only non-trivial IDAES bubble candidate (19.74 K) is liquid
+hydrogen holding about 6 % methane, below the methane triple point, with incipient aromatic
+fractions at the 1e-12 floor and audit fugacity residual 135. It lies outside the model and HDA
+domains and is an unavailable auxiliary root under the issue's rule. An independent reviewer
+located a model bubble root at that temperature.
 
 **What does exist.**
 - Accepted dew rows (distinct roots, audit passed): gas feed 227.65 K, M101 outlet 366.284 K,
