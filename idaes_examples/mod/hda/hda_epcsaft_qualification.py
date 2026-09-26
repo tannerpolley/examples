@@ -119,15 +119,17 @@ def bubble_sum_rows(mix, streams):
             try:
                 liquid = mix.state(T, P=P, x=list(z), phase="liquid")
                 y = [0.99, 0.0099, 5e-5, 5e-5]  # hydrogen-rich start: y = z is the trivial fixed point
-                for _ in range(200):
+                converged = False
+                for iterations in range(1, 201):
                     vapor = mix.state(T, P=P, x=y, phase="vapor")
                     k = [math.exp(a - b) for a, b in zip(liquid.log_fugacity_coefficient, vapor.log_fugacity_coefficient)]
                     total = sum(ki * zi for ki, zi in zip(k, z))
                     new = [max(ki * zi / total, 1e-300) for ki, zi in zip(k, z)]
                     if max(abs(a - b) for a, b in zip(new, y)) < 1e-12:
+                        converged = True
                         break
                     y = new
-                row.update({"sum_Kz": total, "y_H2": y[0], "rho_liquid": liquid.molar_density, "rho_vapor": vapor.molar_density,
+                row.update({"sum_Kz": total, "converged": converged, "iterations": iterations, "y_H2": y[0], "rho_liquid": liquid.molar_density, "rho_vapor": vapor.molar_density,
                             "liquid_roots": liquid.stable_root_count, "trivial": max(abs(a - b) for a, b in zip(y, z)) < 1e-3})
             except Exception as err:  # retained: no density root at this T and P
                 row["reason"] = str(err)[:120]

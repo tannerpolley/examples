@@ -63,13 +63,15 @@ and F101 vapor.
 
 **Bubble sum at the stream pressure (`bubble_sum_at_stream_pressure.csv`).** With the liquid
 at the stream composition z and 0.35 MPa, the incipient vapor is converged by successive
-substitution from a hydrogen-rich start, and S = sum K_i z_i is recorded from 12 to 300 K.
+substitution from a hydrogen-rich start, and S = sum K_i z_i is recorded from 12 to 300 K with
+its convergence flag and iteration count (at a converged point the tangent-plane distance of the
+liquid is -ln S).
 S > 1 means the liquid is unstable to that vapor; a bubble temperature needs S = 1.
 
 | Stream | S where a liquid-like root exists | Higher temperatures |
 |---|---|---|
-| M101 outlet (28 % H2) | 78 to 2.9e9 (12-210 K) | only one gas-like root (240-300 K) |
-| R101 outlet / F101 feed (16 % H2) | 34 to 5.8e9 (12-240 K) | only one gas-like root (270-300 K) |
+| M101 outlet (28 % H2) | 78 to 2.9e14 (12-210 K) | only one gas-like root (240-300 K) |
+| R101 outlet / F101 feed (16 % H2) | 34 to 5.8e13 (12-240 K) | only one gas-like root (270-300 K) |
 | F101 vapor (19 % H2) | 28 to 8.7e4 (12-180 K) | only one gas-like root (210-300 K) |
 
 So these process streams have no bubble temperature at their pressure: dissolving 16-28 % H2
@@ -78,8 +80,7 @@ needs tens of MPa of hydrogen (the retained H2/CH4 observations show x_H2 = 0.12
 33 K critical point dominates. Its only non-trivial IDAES bubble candidate (19.74 K) is liquid
 hydrogen holding about 6 % methane, below the methane triple point, with incipient aromatic
 fractions at the 1e-12 floor and audit fugacity residual 135. It lies outside the model and HDA
-domains and is an unavailable auxiliary root under the issue's rule. An independent reviewer
-located a model bubble root at that temperature.
+domains and is an unavailable auxiliary root under the issue's rule.
 
 **What does exist.**
 - Accepted dew rows (distinct roots, audit passed): gas feed 227.65 K, M101 outlet 366.284 K,
