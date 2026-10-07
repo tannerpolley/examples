@@ -7,7 +7,7 @@ objective with overhead-loss, benzene-production and purity constraints.
 
 import time
 
-from pyomo.environ import (ConcreteModel, Constraint, Expression, Objective, Param,
+from pyomo.environ import (ConcreteModel, Constraint, Expression, Objective, Param, Suffix,
                            TransformationFactory, Var, units as pyunits, value)
 from pyomo.network import Arc
 from idaes.core import FlowsheetBlock
@@ -41,7 +41,15 @@ SOLVER_OPTIONS = {"nlp_scaling_method": "user-scaling", "ma57_automatic_scaling"
 # ePC-SAFT: primal residuals to 1e-9 in the unit-scaled model (1e-5 W, 1e-4 Pa; the callback's
 # ln(phi) precision floor is ~1e-10), and the adaptive barrier update: the fixed update stalls
 # with mu = 0.1 while smoothing- and eps-sized phase amounts sit next to their zero bounds.
-EPCSAFT_OPTIONS = {**SOLVER_OPTIONS, "constr_viol_tol": 1e-9, "mu_strategy": "adaptive"}
+# Absolute dual and complementarity tolerances: Ipopt's defaults (1, 1e-4) let multipliers of
+# 1e9-4e17 on structurally zero rows inflate its relative test (s_d ~ 1.5e8) so that it stops at
+# mu ~ 1e-6 before stationarity (ePC-SAFT #73 diagnosis). These tighten the stopping test.
+EPCSAFT_OPTIONS = {**SOLVER_OPTIONS, "constr_viol_tol": 1e-9, "mu_strategy": "adaptive",
+                   "dual_inf_tol": 1e-6, "compl_inf_tol": 1e-6,
+                   "max_iter": 400, "max_cpu_time": 1800}  # caps: 2x the largest converged run
+# Warm start from a previous solution's primal and multipliers without pushing it off its bounds.
+WARM_START_OPTIONS = {"warm_start_init_point": "yes", "warm_start_bound_push": 1e-8,
+                      "warm_start_mult_bound_push": 1e-8, "mu_init": 1e-8}
 
 
 def build(package="ideal"):
@@ -122,7 +130,7 @@ def _epcsaft_numerics(m):
     # bound_relax_factor = 0 keeps every composition weight inside the callback domain. Phase flows
     # and fractions are never callback inputs; they get Ipopt's default 1e-8 lower-bound relaxation
     # explicitly, because SmoothVLE leaves superheated streams a liquid of O(eps_2^2 / (T - T_dew))
-    # (1e-19 to 1e-11 mol/s) whose hard zero bound makes the barrier multipliers diverge.
+    # (1e-21 to 1e-11 mol/s) whose hard zero bound makes the barrier multipliers diverge.
     for var in m.component_objects(Var, descend_into=True):
         if var.local_name in ("flow_mol_phase", "phase_frac"):
             for v in var.values():
@@ -214,17 +222,32 @@ def initialize_from(m, ref):
     fix_inlet_states(m)
 
 
+def enable_warm_start(m):
+    """Export suffixes that carry each solve's multipliers into the next solve, which then uses
+    Ipopt's warm start (WARM_START_OPTIONS) instead of its default interior initial point."""
+    for name in ("dual", "ipopt_zL_in", "ipopt_zU_in"):
+        m.add_component(name, Suffix(direction=Suffix.EXPORT))
+
+
 def solve(m, tee=False):
     """IDAES ipopt_v2 settings (scaled NL writer, linear presolve, MA57); returns solver evidence."""
+    options = SOLVER_OPTIONS if m.package == "ideal" else EPCSAFT_OPTIONS
+    warm = hasattr(m, "ipopt_zL_in") and len(m.ipopt_zL_in) > 0
     t0 = time.perf_counter()
     res = Ipopt().solve(m, tee=tee, load_solutions=False, raise_exception_on_nonoptimal_result=False,
-                        solver_options=SOLVER_OPTIONS if m.package == "ideal" else EPCSAFT_OPTIONS,
+                        solver_options={**options, **WARM_START_OPTIONS} if warm else options,
                         writer_config={"scale_model": True, "linear_presolve": True})
     wall = time.perf_counter() - t0
     if res.solution_status != SolutionStatus.noSolution:
         res.solution_loader.load_vars()
+        if hasattr(m, "ipopt_zL_in"):  # keep the multipliers, in the writer's scaled terms for z
+            m.dual.update(res.solution_loader.get_duals())
+            obj_scale = iscale.get_scaling_factor(m.fs.objective, default=1)
+            for v, z in res.solution_loader.get_reduced_costs().items():
+                zs = z * obj_scale / iscale.get_scaling_factor(v, default=1)
+                m.ipopt_zL_in[v], m.ipopt_zU_in[v] = max(zs, 0.0), min(zs, 0.0)
     return {"termination": res.termination_condition.name, "iterations": res.extra_info.iteration_count,
-            "wall_s": wall}
+            "wall_s": wall, "warm_start": warm}
 
 
 def summary(m):
@@ -255,9 +278,10 @@ def run_campaign(m, base_state):
     return out
 
 
-def run_ideal_baseline():
+def run_ideal_baseline(factor=1.0):
     from idaes.core.util import to_json
     m = build("ideal")
+    set_smoothing(m, factor)
     initialize_ideal(m)
     solve(m)
     return m, run_campaign(m, to_json(m, return_dict=True))

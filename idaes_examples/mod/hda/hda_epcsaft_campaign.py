@@ -13,6 +13,7 @@ import csv
 import gzip
 import hashlib
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -156,13 +157,56 @@ def campaign(ref, mix, factor):
         from_json(m, sd=base)  # initial point: the fixed simulation with the decisions at the start
         flowsheet.fix_simulation(m, start)
         flowsheet.set_optimization(m)
-        rec = {"factor": factor, "start": start, **flowsheet.solve(m)}
-        rec.update(evidence(m, mix))
-        rec["kkt"] = kkt(m, flowsheet.decisions(m))
-        print("optimization", factor, start, rec["termination"], rec["iterations"], round(rec["wall_s"]),
-              rec["objective_USD_per_yr"], rec["kkt"]["label"], rec["kkt"]["norms"], flush=True)
-        opts.append(rec)
+        opts.append(optimize(m, mix, factor, start))
     return sim, opts
+
+
+def optimize(m, mix, factor, start):
+    rec = {"factor": factor, "start": start, **flowsheet.solve(m)}
+    rec.update(evidence(m, mix))
+    rec["kkt"] = kkt(m, flowsheet.decisions(m))
+    print("optimization", factor, start, rec["termination"], rec["iterations"], round(rec["wall_s"]),
+          rec["objective_USD_per_yr"], rec["kkt"]["label"], rec["kkt"]["norms"], flush=True)
+    return rec
+
+
+def continuation(factors=(1.0, 0.3, 0.1, 0.03, 0.01)):
+    """Smoothing continuation from each fixed start: the optimum at the default width, then each
+    smaller width warm-started (primal and multipliers) from the previous width's optimum, in
+    short steps. Writes continuation.json and continuation_primal_dual.csv.gz."""
+    mix = mixture()
+    ref = flowsheet.build("ideal")
+    flowsheet.initialize_ideal(ref)
+    flowsheet.solve(ref)
+    m = flowsheet.build("epcsaft")
+    flowsheet.fix_simulation(m)
+    flowsheet.initialize_from(m, ref)
+    flowsheet.solve(m)
+    base = to_json(m, return_dict=True)
+    runs, sens, primal_dual = [], [], []
+    for start in flowsheet.STARTS:
+        from_json(m, sd=base)
+        flowsheet.fix_simulation(m, start)
+        flowsheet.set_optimization(m)
+        for name in ("dual", "ipopt_zL_in", "ipopt_zU_in"):  # a cold solve at the default width
+            if hasattr(m, name):
+                m.del_component(name)
+        flowsheet.enable_warm_start(m)
+        path = []
+        for f in factors:
+            flowsheet.set_smoothing(m, f)
+            path.append(optimize(m, mix, f, start))
+            primal_dual += primal_dual_rows(path[-1], "start_" + "_".join(str(v) for v in start))
+            if path[-1]["termination"] != "convergenceCriteriaSatisfied":
+                break
+            # A warm re-solve at the same width refines the multipliers passed to the next width
+            # (a cold solve's final multipliers are a poor warm start in the degenerate rows).
+            path[-1]["multiplier_refinement"] = flowsheet.solve(m)
+        runs += path
+        sens += [{"factor": r["factor"], "case": f"start {start}", **compare(path[0], r)} for r in path[1:]]
+    out = {"provenance": provenance(), "runs": [public(r) for r in runs], "sensitivity": sens}
+    (RESULTS / "continuation.json").write_text(json.dumps(out, indent=1, default=float))
+    write_primal_dual("continuation_primal_dual.csv.gz", primal_dual)
 
 
 def compare(ref, other):
@@ -176,6 +220,7 @@ def compare(ref, other):
     for u in ref["vapor_fraction"]:
         checks[f"vapor_fraction_{u}"] = abs(ref["vapor_fraction"][u] - other["vapor_fraction"][u]) <= 1e-4
     checks["topology"] = ref["_signature"] == other["_signature"]
+    checks["converged"] = all(r["termination"] == "convergenceCriteriaSatisfied" for r in (ref, other))
     return {"passed": all(checks.values()), "failed": [k for k, ok in checks.items() if not ok],
             "max_abs_change": {"objective_USD_per_yr": abs(ref["objective_USD_per_yr"] - other["objective_USD_per_yr"]),
                                "purity": abs(ref["purity"] - other["purity"]),
@@ -202,24 +247,50 @@ def write_csv(name, rows):
         writer.writerows(rows)
 
 
+def primal_dual_rows(rec, case):
+    pdx = rec["kkt"].pop("_primal_dual")
+    return ([(rec["factor"], case, "variable", n, v, s) for n, v, s in pdx["variables"]]
+            + [(rec["factor"], case, "equality_multiplier_scaled", n, v, s) for n, v, s in pdx["equalities"]])
+
+
+def write_primal_dual(name, rows):
+    with gzip.open(RESULTS / name, "wt", newline="") as fh:
+        w = csv.writer(fh, lineterminator="\n")
+        w.writerow(["factor", "case", "kind", "name", "value", "scale"])
+        w.writerows(rows)
+
+
+def provenance():
+    """Installed wheel, ASL library, inputs and this repository's commit (clean source tree)."""
+    sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()  # noqa: E731
+    wheel = json.loads(next(Path(epcsaft.__file__).parent.parent.glob("epcsaft-*.dist-info"))
+                       .joinpath("direct_url.json").read_text())["url"].removeprefix("file://")
+    git = lambda *a: subprocess.run(["git", *a], cwd=RESULTS.parent, capture_output=True, text=True).stdout.strip()  # noqa: E731
+    return {"wheel": wheel, "wheel_sha256": sha(wheel), "asl_library_sha256": sha(LIBRARY),
+            "parameters_sha256": sha(PARAMETERS), "nasa9_sha256": sha(NASA9), "python": sys.version.split()[0],
+            "downstream_commit": git("rev-parse", "HEAD"),
+            "downstream_source_clean": git("status", "--porcelain", "--", "idaes_examples") == ""}
+
+
 def public(rec):
     return {k: v for k, v in rec.items() if not k.startswith("_")}
 
 
 def main(factors=FACTORS):
+    """Every result file is rewritten after each smoothing factor (partial runs keep evidence)."""
     RESULTS.mkdir(exist_ok=True)
     t0 = time.perf_counter()
-    sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()  # noqa: E731
     mix = mixture()
     write_csv("property_transport.csv", qual.transport_rows(mix))
     write_csv("callback_domain.csv", qual.callback_domain_rows())
-    ideal_m, ideal = flowsheet.run_ideal_baseline()
-    (RESULTS / "ideal_baseline.json").write_text(json.dumps(ideal, indent=1))
+    ideal_by_factor = {f: flowsheet.run_ideal_baseline(f)[1] for f in factors}  # also a smoothing control
+    (RESULTS / "ideal_baseline.json").write_text(json.dumps(ideal_by_factor, indent=1))
+    ideal = ideal_by_factor[factors[0]]
     ref = flowsheet.build("ideal")  # the solved fixed ideal simulation initializes every ePC-SAFT run
     flowsheet.initialize_ideal(ref)
     flowsheet.solve(ref)
 
-    binary, sims, opts, sens, audits, stream_rows, primal_dual = {}, {}, [], [], [], [], []
+    binary, sims, opts, audits, stream_rows, primal_dual = {}, {}, [], [], [], []
     for f in factors:
         binary[f] = qual.binary_path_rows(mix, f)
         sims[f], o = campaign(ref, mix, f)
@@ -229,36 +300,31 @@ def main(factors=FACTORS):
             audits += [{"factor": f, "case": case, **r} for r in rec["_audit"]]
             stream_rows += [{"factor": f, "case": case, **r} for r in rec["_streams"]]
             if "kkt" in rec:
-                pdx = rec["kkt"].pop("_primal_dual")
-                primal_dual += [(f, case, "variable", n, v, s) for n, v, s in pdx["variables"]]
-                primal_dual += [(f, case, "equality_multiplier_scaled", n, v, s) for n, v, s in pdx["equalities"]]
-    for f in factors[1:]:
-        sens.append({"factor": f, "case": "simulation", **compare(sims[factors[0]], sims[f])})
-        for a, b in zip([o for o in opts if o["factor"] == factors[0]], [o for o in opts if o["factor"] == f]):
-            sens.append({"factor": f, "case": f"start {a['start']}", **compare(a, b)})
-    binary_sens = [r for f in factors[1:] for r in compare_binary(binary[factors[0]], binary[f])]
-
-    write_csv("binary_path.csv", [r for f in factors for r in binary[f]])
-    write_csv("binary_path_sensitivity.csv", binary_sens)
-    write_csv("audit.csv", audits)
-    write_csv("streams.csv", stream_rows)
-    with gzip.open(RESULTS / "optimization_primal_dual.csv.gz", "wt", newline="") as fh:
-        w = csv.writer(fh, lineterminator="\n")
-        w.writerow(["factor", "case", "kind", "name", "value", "scale"])
-        w.writerows(primal_dual)
-    wheel = json.loads(next(Path(epcsaft.__file__).parent.parent.glob("epcsaft-*.dist-info"))
-                       .joinpath("direct_url.json").read_text())["url"].removeprefix("file://")
-    out = {"provenance": {"wheel": wheel, "wheel_sha256": sha(wheel), "asl_library_sha256": sha(LIBRARY),
-                          "parameters_sha256": sha(PARAMETERS), "nasa9_sha256": sha(NASA9),
-                          "python": sys.version.split()[0]},
-           "simulations": [public(sims[f]) for f in factors], "optimizations": [public(o) for o in opts],
-           "sensitivity": sens,
-           "binary_path_sensitivity_passed": all(r["passed"] for r in binary_sens),
-           "ideal_baseline": {"simulation": public(ideal["simulation"]),
-                              "optimum": public(ideal["optimizations"][0])},
-           "wall_s": time.perf_counter() - t0}
-    (RESULTS / "campaign.json").write_text(json.dumps(out, indent=1, default=float))
+                primal_dual += primal_dual_rows(rec, case)
+        done = [g for g in factors if g in sims]
+        sens = []
+        for g in done[1:]:
+            sens.append({"factor": g, "case": "simulation", **compare(sims[done[0]], sims[g])})
+            for a, b in zip([o for o in opts if o["factor"] == done[0]], [o for o in opts if o["factor"] == g]):
+                sens.append({"factor": g, "case": f"start {a['start']}", **compare(a, b)})
+        binary_sens = [r for g in done[1:] for r in compare_binary(binary[done[0]], binary[g])]
+        write_csv("binary_path.csv", [r for g in done for r in binary[g]])
+        write_csv("audit.csv", audits)
+        write_csv("streams.csv", stream_rows)
+        if binary_sens:
+            write_csv("binary_path_sensitivity.csv", binary_sens)
+        write_primal_dual("optimization_primal_dual.csv.gz", primal_dual)
+        out = {"provenance": provenance(), "factors_done": done,
+               "simulations": [public(sims[g]) for g in done], "optimizations": [public(o) for o in opts],
+               "sensitivity": sens, "binary_path_sensitivity_passed": all(r["passed"] for r in binary_sens),
+               "ideal_baseline": {"simulation": public(ideal["simulation"]),
+                                  "optimum": public(ideal["optimizations"][0])},
+               "wall_s": time.perf_counter() - t0}
+        (RESULTS / "campaign.json").write_text(json.dumps(out, indent=1, default=float))
 
 
 if __name__ == "__main__":
-    main(tuple(float(a) for a in sys.argv[1:]) or FACTORS)
+    if sys.argv[1:] == ["continuation"]:
+        continuation()
+    else:
+        main(tuple(float(a) for a in sys.argv[1:]) or FACTORS)
