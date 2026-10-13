@@ -31,11 +31,12 @@ NASA9 = INPUTS / "nasa9-records.json"
 COMPONENTS = ("hydrogen", "methane", "benzene", "toluene")  # fixed callback order
 LIBRARY = str(Path(epcsaft.__file__).parent / "libepcsaft_asl.so")
 X_MIN = 1e-12  # audit floor for declared phase fractions (issue numerical checks)
-OBSERVABLES = {  # IDAES name -> (callback observable, result units)
-    "dens": ("molar_density", pyunits.mol / pyunits.m**3),
-    "enth": ("enthalpy", pyunits.J / pyunits.mol),
-    "lnphi": ("log_fugacity_coefficient", pyunits.dimensionless),
+ROWS = {  # IDAES name -> (callback row; ln(phi_i) is row 2 + i, result units)
+    "dens": (0, pyunits.mol / pyunits.m**3),
+    "enth": (1, pyunits.J / pyunits.mol),
+    "lnphi": (2, pyunits.dimensionless),
 }
+PHASES = {"liquid": 0, "vapor": 1}  # callback phase selector
 
 
 def thermochemistry():
@@ -64,7 +65,7 @@ def _phase(b, p):
     return "liquid" if b.params.get_phase(p).is_liquid_phase() else "vapor"
 
 
-def _call(b, kind, p, T, P, x, j="-"):
+def _call(b, kind, p, T, P, x, j=None):
     """One callback term; x maps component name -> mole-fraction expression.
 
     Weights are the IDAES mole fractions (bounded >= 0 by IDAES), unclipped; a component
@@ -73,8 +74,8 @@ def _call(b, kind, p, T, P, x, j="-"):
     """
     f = getattr(b.params, "_epcsaft_" + kind)
     w = [x[c] if (p, c) in b.phase_component_set else 0.0 for c in COMPONENTS]
-    comp = j if j == "-" else str(COMPONENTS.index(j))
-    return f(T, P, *w, b.params._epcsaft_record, OBSERVABLES[kind][0], comp, _phase(b, p))
+    row = ROWS[kind][0] + (0 if j is None else COMPONENTS.index(j))
+    return f(T, P, *w, b.params._epcsaft_record, str(row), str(PHASES[_phase(b, p)]))
 
 
 def _phase_x(b, p):
@@ -105,8 +106,8 @@ class EPCSAFT(EoSBase):
         if not set(pb.component_list) <= set(COMPONENTS):
             raise ValueError(f"ePC-SAFT HDA callback components are {COMPONENTS}")
         pb._epcsaft_record = epcsaft.eos.property_asl_record(mixture())
-        arg_units = [pyunits.K, pyunits.Pa] + [pyunits.dimensionless] * 4 + [None] * 4
-        for kind, (_, units) in OBSERVABLES.items():
+        arg_units = [pyunits.K, pyunits.Pa] + [pyunits.dimensionless] * 4 + [None] * 3
+        for kind, (_, units) in ROWS.items():
             pb.add_component("_epcsaft_" + kind, ExternalFunction(
                 library=LIBRARY, function="epcsaft_pressure_property",
                 units=units, arg_units=arg_units))

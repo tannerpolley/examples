@@ -13,11 +13,13 @@ import numpy as np
 import scipy.linalg
 import scipy.sparse.linalg
 from pyomo.contrib.pynumero.interfaces.pyomo_nlp import PyomoNLP
+from pyomo.environ import value
+from pyomo.network import Arc
 
 from idaes_examples.mod.hda.hda_two_flash_epcsaft import OBJECTIVE_SCALE, unit_scale
 
 TOL = 1e-6  # scaled KKT norms and active-set slack
-RANK_RATIO, CURVATURE = 1e-8, 1e-8
+RANK_RATIO, CURVATURE, EXCLUDE = 1e-8, 1e-8, 1e-10
 
 
 def kkt(m, decisions):
@@ -37,7 +39,7 @@ def kkt(m, decisions):
     eq = gl == gu
 
     # Inequalities h >= 0 (scaled): process constraints, then variable bounds.
-    rows, h, names, source = [], [], [], []
+    rows, h, names, source, a_var = [], [], [], [], {}
     for i in np.flatnonzero(~eq):
         for bound, sign in ((gl[i], 1.0), (gu[i], -1.0)):
             if np.isfinite(bound):
@@ -49,6 +51,7 @@ def kkt(m, decisions):
                 e = np.zeros(len(x)); e[j] = sign
                 rows.append(e); h.append(sign * (x[j] - bound) / sx[j])
                 names.append(variables[j].name + (" >= lb" if sign > 0 else " <= ub")); source.append(None)
+                a_var[len(rows) - 1] = j
     A, h = np.array(rows), np.array(h)
 
     # Null space of the equality Jacobian with the decisions independent.
@@ -61,27 +64,43 @@ def kkt(m, decisions):
     Z = np.zeros((len(x), len(dec)))
     Z[st] = -lu.solve(Je[:, dec])
     Z[dec] = np.eye(len(dec))
-    reduced_grad = Z.T @ grad
 
-    # Active set: scaled slack <= TOL, measured in the decision space (slack / max-norm of the
-    # constraint's reduced row), which equals the plain scaled slack for decision bounds. A trace
-    # quantity next to its bound (smoothing- or eps-sized phase amounts, vapor-only fractions,
-    # 1e-12 to 1e-7) has a small plain slack but is set by the equalities and lies a finite decision
-    # change away from its bound: it is inactive, with zero multiplier, and reported separately.
+    # Active set (owner rule M2): every inequality and bound with scaled slack <= TOL is reported.
+    # Row j leaves the rank test only when its projection onto the decisions is shown to be zero:
+    # ||a_j Z||_2 + err_j <= 1e-10 ||a_j||_2, err_j the change of a_j Z over one refinement step.
+    dZ = np.zeros_like(Z)
+    dZ[st] = -lu.solve(Je @ Z)
+    cond = np.abs(Je[:, st]).sum(axis=0).max() * scipy.sparse.linalg.onenormest(  # 1-norm condition estimate
+        scipy.sparse.linalg.LinearOperator(lu.shape, matvec=lu.solve, rmatvec=lambda v: lu.solve(v, trans="T")))
+    Z = Z + dZ
+    reduced_grad = Z.T @ grad
     near = np.flatnonzero(h <= TOL)
-    reach = np.abs(A[near] @ Z).max(axis=1, initial=0)
-    distance = np.divide(h[near], reach, out=np.full(near.size, np.inf), where=reach > 0)
-    active = near[distance <= TOL]
-    inactive_near = near[distance > TOL]
+    proj, err = A[near] @ Z, np.abs(A[near] @ dZ).max(axis=1, initial=0.0)
+    norm_a = np.linalg.norm(A[near], axis=1)
+    excluded = np.linalg.norm(proj, axis=1) + err <= EXCLUDE * norm_a
+    active = near[~excluded]
     Ar = A[active] @ Z
     mu = np.linalg.lstsq(Ar.T, reduced_grad, rcond=None)[0] if len(active) else np.zeros(0)
     stationarity = reduced_grad - Ar.T @ mu
     Aa = A[active]
     lam = lu.solve(grad[st] - Aa[:, st].T @ mu, trans="T")  # scaled equality multipliers
+    full_residual = grad - Je.T @ lam - Aa.T @ mu
 
     primal = max(np.abs((g[eq] - gl[eq]) / sc[eq]).max(), max(0.0, -h.min()))
     comp = np.abs(mu * h[active]).max(initial=0.0)
     sv = scipy.linalg.svdvals(np.vstack([Je, Aa]))
+    multiplier = dict(zip(active, mu))
+    partner = arc_partners(m)
+    near_rows = []
+    for k, a in enumerate(near):
+        row = {"name": names[a], "slack": float(h[a]), "row_norm": float(norm_a[k]),
+               "projection": proj[k].tolist(), "projection_norm": float(np.linalg.norm(proj[k])),
+               "projection_error": float(err[k]), "excluded": bool(excluded[k]),
+               "multiplier": float(multiplier[a]) if a in multiplier else None}
+        if source[a] is None:
+            v = variables[a_var[a]]
+            row.update(variable_identity(v), arc_partner=partner.get(id(v)))
+        near_rows.append(row)
 
     # Reduced Lagrangian Hessian on the null space of the active constraints (unscaled duals).
     y = np.zeros(len(constraints))
@@ -97,20 +116,21 @@ def kkt(m, decisions):
     eig = np.linalg.eigvalsh(N.T @ Z.T @ H @ Z @ N) if N.shape[1] else np.zeros(0)
 
     norms = {"primal_feasibility": float(primal), "stationarity": float(np.abs(stationarity).max()),
+             "full_stationarity": float(np.abs(full_residual).max()),
              "dual_sign": float(max(0.0, -mu.min(initial=0.0))), "complementarity": float(comp)}
-    full_rank = bool(sv.min() >= RANK_RATIO * sv.max())
+    full_rank = bool(len(active) <= len(dec) and sv.min() >= RANK_RATIO * sv.max())
     stationary = all(v <= TOL for v in norms.values()) and full_rank
-    # With as many independent active constraints as decisions the critical cone is {0} under
-    # strict complementarity, so positive multipliers replace the (empty) curvature test.
-    local_min = stationary and (eig.min() > CURVATURE if eig.size else mu.min(initial=np.inf) > TOL)
+    # M4: with as many counted active rows as decisions and every multiplier > TOL the critical
+    # cone is {0}; otherwise A5's reduced-Hessian eigenvalue test.
+    empty_cone = len(active) == len(dec) and mu.min(initial=-np.inf) > TOL
+    local_min = stationary and (empty_cone or (eig.size > 0 and eig.min() > CURVATURE))
     return {
         "norms": norms,
-        "active_set": [{"name": names[a], "slack": float(h[a]), "multiplier": float(mu[k])}
-                       for k, a in enumerate(active)],
-        "near_bound_inactive": {"count": int(inactive_near.size),
-                                "min_decision_distance": float(distance[distance > TOL].min(initial=np.inf)),
-                                "names": [names[a] for a in inactive_near]},
+        "near_active": near_rows,
+        "counted_active": len(active), "excluded": int(excluded.sum()),
+        "state_jacobian_condition_1norm": float(cond),
         "singular_values": {"min": float(sv.min()), "max": float(sv.max()), "ratio": float(sv.min() / sv.max()),
+                            "rows": int(Je.shape[0] + len(active)), "columns": int(Je.shape[1]),
                             "full_row_rank": full_rank},
         "reduced_hessian_eigenvalues": eig.tolist(), "reduced_gradient": reduced_grad.tolist(),
         "label": "local minimum" if local_min else ("stationary candidate" if stationary else "not stationary"),
@@ -120,3 +140,29 @@ def kkt(m, decisions):
                          "equalities": [(constraints[i].name, float(l), float(sc[i]))
                                         for i, l in zip(np.flatnonzero(eq), lam)]},
     }
+
+
+def variable_identity(v):
+    """Declared and effective bounds of a near-active variable; for a phase quantity both the raw
+    phase flow and phase_frac x flow_mol (two stored values linked by one equality)."""
+    out = {"domain": str(v.domain), "declared_bounds": [None if b is None else value(b) for b in (v.lower, v.upper)],
+           "effective_bounds": list(v.bounds), "value": float(v.value)}
+    sb, name = v.parent_block(), v.parent_component().local_name
+    if name in ("flow_mol_phase", "phase_frac"):
+        p = v.index()
+        out["flow_mol_phase"] = float(value(sb.flow_mol_phase[p]))
+        out["phase_frac_x_flow_mol"] = float(value(sb.phase_frac[p] * sb.flow_mol))
+    return out
+
+
+def arc_partners(m):
+    """id(variable) -> name of the variable an arc equality identifies it with."""
+    out = {}
+    for arc in m.component_data_objects(Arc):
+        for key, src in arc.source.vars.items():
+            dst = arc.destination.vars[key]
+            if src.is_indexed() and dst.is_indexed():
+                for i in src:
+                    if i in dst and src[i].is_variable_type() and dst[i].is_variable_type():
+                        out[id(src[i])], out[id(dst[i])] = dst[i].name, src[i].name
+    return out

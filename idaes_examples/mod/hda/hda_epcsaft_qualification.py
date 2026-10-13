@@ -13,7 +13,7 @@ from idaes.core import FlowsheetBlock
 from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
 
 from idaes_examples.mod.hda import hda_two_flash_epcsaft as flowsheet
-from idaes_examples.mod.hda.epcsaft_eos import COMPONENTS, audit_row
+from idaes_examples.mod.hda.epcsaft_eos import COMPONENTS, PHASES, ROWS, audit_row
 from idaes_examples.mod.hda.hda_epcsaft_VLE import thermo_config, thermo_config_binary
 
 PP = flowsheet.PP
@@ -59,17 +59,19 @@ def transport_rows(mix):
             st = mix.state(T, P=P, x=x, phase=phase)
             eos = sb.params.get_phase(p).config.equation_of_state
             lnphi = [sb.params._epcsaft_lnphi.evaluate([T, P, *x, sb.params._epcsaft_record,
-                                                         "log_fugacity_coefficient", str(i), phase])
+                                                         str(ROWS["lnphi"][0] + i), str(PHASES[phase])])
                      for i in range(4)]
-            pairs = [("molar_density", value(sb.dens_mol_phase[p]), st.molar_density, st.molar_density),
-                     ("enthalpy", value(sb.enth_mol_phase[p]), st.total_enthalpy, st.total_enthalpy)]
+            pairs = [("molar_density", value(sb.dens_mol_phase[p]), st.molar_density, 1e4),
+                     ("enthalpy", value(sb.enth_mol_phase[p]), st.total_enthalpy, 1e4)]
             pairs += [(f"ln_phi_{c}", g, r, 1.0) for c, g, r in zip(COMPONENTS, lnphi, st.log_fugacity_coefficient)]
             pairs += [(f"log_fug_eq_{c}", value(eos.log_fug_phase_comp_eq(sb, p, c, PP)),
                        math.log(x[i] * P / 1e5) + st.log_fugacity_coefficient[i], 1.0)
                       for i, c in enumerate(COMPONENTS) if (p, c) in sb.phase_component_set]
-            for quantity, got, ref, scale in pairs:  # ln phi and ln f use the declared scale 1
+            for quantity, got, ref, scale in pairs:  # A12 fixed scales: rho 1e4 mol/m3, h 1e4 J/mol, ln 1
+                diff, limit = abs(got - ref) / scale, 1e-12 + 1e-10 * abs(ref / scale)
                 rows.append({"state": name, "T_K": T, "P_Pa": P, "phase": phase, "quantity": quantity,
-                             "idaes": got, "public": ref, "scaled_diff": abs(got - ref) / max(abs(scale), 1.0),
+                             "idaes": got, "public": ref, "scale": scale, "scaled_diff": diff, "limit": limit,
+                             "excess": diff - limit, "passed": diff <= limit,
                              "branch": st.density_branch.name, "stable_roots": st.stable_root_count})
     return rows
 
@@ -78,11 +80,9 @@ def callback_domain_rows():
     """Callback availability versus temperature for the gas-feed composition (vapor request)."""
     pb = state_block(thermo_config, defined_state=True)[1].params
     w = _normalized((0.30, 0.02, 1e-5, 1e-5))
-    return [{"T_K": T, "observable": obs, "value": getattr(pb, "_epcsaft_" + kind).evaluate(
-        [T, 350000.0, *w, pb._epcsaft_record, obs, comp, "vapor"])}
-        for T in (150.0, 199.9, 200.0, 200.1, 250.0)
-        for kind, obs, comp in (("dens", "molar_density", "-"), ("enth", "enthalpy", "-"),
-                                ("lnphi", "log_fugacity_coefficient", "0"))]
+    return [{"T_K": T, "row": row, "value": getattr(pb, "_epcsaft_" + kind).evaluate(
+        [T, 350000.0, *w, pb._epcsaft_record, str(row), str(PHASES["vapor"])])}
+        for T in (150.0, 199.9, 200.0, 200.1, 250.0) for kind, (row, _) in ROWS.items()]
 
 
 def binary_path_rows(mix, factor):

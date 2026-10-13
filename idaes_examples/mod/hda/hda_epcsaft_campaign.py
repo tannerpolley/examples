@@ -154,10 +154,17 @@ def campaign(ref, mix, factor):
     base = to_json(m, return_dict=True)
     opts = []
     for start in flowsheet.STARTS:
-        from_json(m, sd=base)  # initial point: the fixed simulation with the decisions at the start
+        # D8: reset to the solved simulation, square-solve at the start's decisions, then release them.
+        from_json(m, sd=base)
         flowsheet.fix_simulation(m, start)
+        square = {**flowsheet.solve(m), **evidence(m, mix)}
+        square["audit_rejected_rows"] = [r for r in square["_audit"] if not r["accepted"]]
+        if square["termination"] != "convergenceCriteriaSatisfied":
+            opts.append({"factor": factor, "start": start, "termination": "square solve failed",
+                         "square": public(square)})
+            continue
         flowsheet.set_optimization(m)
-        opts.append(optimize(m, mix, factor, start))
+        opts.append({**optimize(m, mix, factor, start), "square": public(square)})
     return sim, opts
 
 
@@ -297,8 +304,8 @@ def main(factors=FACTORS):
         opts += o
         for rec in (sims[f], *o):
             case = "simulation" if "start" not in rec else "start_" + "_".join(str(v) for v in rec["start"])
-            audits += [{"factor": f, "case": case, **r} for r in rec["_audit"]]
-            stream_rows += [{"factor": f, "case": case, **r} for r in rec["_streams"]]
+            audits += [{"factor": f, "case": case, **r} for r in rec.get("_audit", [])]
+            stream_rows += [{"factor": f, "case": case, **r} for r in rec.get("_streams", [])]
             if "kkt" in rec:
                 primal_dual += primal_dual_rows(rec, case)
         done = [g for g in factors if g in sims]
