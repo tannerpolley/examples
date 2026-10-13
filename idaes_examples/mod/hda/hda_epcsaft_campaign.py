@@ -188,8 +188,10 @@ def evidence(m, mix, run):
     rec["streams_within_envelope"] = all(envelope_class(r["T_K"]) == "within" for r in rec["_streams"])
     rec["a1_failed"] = [f"{u}:{k}" for u, r in rec["balances"].items() for k, lim in A1.items() if not r[k] <= lim] + [
         k for k, v in rec["pressure_residuals_Pa"].items() if not v <= 1e-2]
+    m7_stop = any(r.get("margin_K", -1.0) < -1e-6 or (not r["m7_passed"] and run["termination"] == "convergenceCriteriaSatisfied")
+                  for r in rows if r["point"] == "gas_dew")  # consistency stops only at converged points (#73, 2026-10-13)
     rec["gate"] = [g for g, failed in (("termination", rec["termination"] != "convergenceCriteriaSatisfied"),
-                                       ("A1", rec["a1_failed"]), ("M7", not rec["m7_passed"]),
+                                       ("A1", rec["a1_failed"]), ("M7", m7_stop),
                                        ("root unavailable", any("unavailable" in r["reason"] or "refused" in r["reason"]
                                                                 for r in rows))) if failed]
     return rec
@@ -211,20 +213,22 @@ def campaign(ref, mix, factor):
         # D8: reset to the solved simulation, square-solve at the start's decisions, then release them.
         from_json(m, sd=base)
         flowsheet.fix_simulation(m, start)
-        square = evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_start{k}_square"))
+        first = square = evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_start{k}_square"))
         o, T = m.fs.F102.control_volume.properties_out[0], flowsheet.decisions(m)[2]  # decision 2: a start F102 T
         tb, td = value(o.temperature_bubble[PP]), value(o.temperature_dew[PP])  # outside [T_bub, T_dew] moves to
         if not tb <= start[2] <= td:  # their midpoint, square-solved again before release
             T.fix((tb + td) / 2)
             square = evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_start{k}_square_inside"))
         square["F102_start_K"] = {"declared": start[2], "T_bub": tb, "T_dew": td, "used": value(T)}
+        square["initial_stops"] = [g for g in first["gate"] if g in ("M7", "root unavailable")]  # never hidden by the retry
         square["audit_rejected_rows"] = [r for r in square["_audit"] if not r["accepted"]]
-        if square["gate"]:
-            opts.append({"factor": factor, "start": start, "termination": "square solve not released",
-                         "square": public(square)})
+        kept = {"square": public(square), "_square_audit": [{**r, "square": "initial"} for r in first["_audit"]] + [
+            {**r, "square": "midpoint"} for r in square["_audit"] if square is not first]}
+        if square["gate"] or square["initial_stops"]:
+            opts.append({"factor": factor, "start": start, "termination": "square solve not released", **kept})
             continue
         flowsheet.set_optimization(m)
-        opts.append({**optimize(m, mix, factor, start, f"{factor:g}_start{k}"), "square": public(square)})
+        opts.append({**optimize(m, mix, factor, start, f"{factor:g}_start{k}"), **kept})
     return sim, opts
 
 
@@ -346,6 +350,7 @@ def main(factors=FACTORS):
         for rec in (sims[f], *o):
             case = "simulation" if "start" not in rec else "start_" + "_".join(str(v) for v in rec["start"])
             audits += [{"factor": f, "case": case, **r} for r in rec.get("_audit", [])]
+            audits += [{"factor": f, "case": case + "_square", **r} for r in rec.get("_square_audit", [])]
             stream_rows += [{"factor": f, "case": case, **r} for r in rec.get("_streams", [])]
             if "kkt" in rec:
                 primal_dual += primal_dual_rows(rec, case)
