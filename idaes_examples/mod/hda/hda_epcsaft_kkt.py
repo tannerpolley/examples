@@ -120,9 +120,10 @@ def kkt(m, decisions):
              "dual_sign": float(max(0.0, -mu.min(initial=0.0))), "complementarity": float(comp)}
     full_rank = bool(len(active) <= len(dec) and sv.min() >= RANK_RATIO * sv.max())
     stationary = all(v <= TOL for v in norms.values()) and full_rank
-    # M4: with as many counted active rows as decisions and every multiplier > TOL the critical
-    # cone is {0}; otherwise A5's reduced-Hessian eigenvalue test.
-    empty_cone = len(active) == len(dec) and mu.min(initial=-np.inf) > TOL
+    # M4, only after every A2 term and the M2 rank test pass: as many counted rows as decisions, each
+    # multiplier > TOL, make the critical cone {0}; otherwise A5's reduced-Hessian eigenvalue test.
+    m4 = {"counted_equals_decisions": len(active) == len(dec), "min_multiplier": float(mu.min(initial=np.inf))}
+    empty_cone = m4["counted_equals_decisions"] and m4["min_multiplier"] > TOL
     local_min = stationary and (empty_cone or (eig.size > 0 and eig.min() > CURVATURE))
     return {
         "norms": norms,
@@ -134,6 +135,7 @@ def kkt(m, decisions):
                             "full_row_rank": full_rank},
         "reduced_hessian_eigenvalues": eig.tolist(), "reduced_gradient": reduced_grad.tolist(),
         "label": "local minimum" if local_min else ("stationary candidate" if stationary else "not stationary"),
+        "m4_premises": {**m4, "a2_and_rank": stationary, "empty_cone_label": bool(stationary and empty_cone)},
         "unclassified_scales": unclassified,
         "equality_multiplier_max_abs": float(np.abs(lam).max()),
         "_primal_dual": {"variables": [(v.name, float(xv), float(s)) for v, xv, s in zip(variables, x, sx)],

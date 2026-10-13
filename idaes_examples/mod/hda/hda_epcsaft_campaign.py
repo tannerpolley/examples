@@ -3,8 +3,8 @@
 For each smoothing factor (1, 0.1, 0.01 x the IDAES SmoothVLE widths): the benzene/toluene
 temperature path, the fixed two-flash recycle simulation started from the solved ideal
 baseline, and the operating-cost optimization from the three fixed starts. Every solution
-gets balances, pressure-equation residuals and a post-solve audit of every dew and _teq
-point; every optimization gets independent KKT evidence (hda_epcsaft_kkt).
+gets balances, pressure-equation residuals, a post-solve audit of every bubble, dew and _teq point
+and the recycle gas's native dew margin (M7); every optimization gets KKT evidence and acceptance.
 Run (one process, ~hours on two shared cores):
     OMP_NUM_THREADS=1 PYTHONPATH=. python -m idaes_examples.mod.hda.hda_epcsaft_campaign
 """
@@ -19,6 +19,8 @@ import time
 from pathlib import Path
 
 import epcsaft
+from epcsaft.equilibrium import Free, MoleFractions, Phase, Pinned, Problem, solve_equilibrium
+from importlib.metadata import version
 from pyomo.environ import Block, value
 from pyomo.network import Arc
 from idaes.core import StateBlockData
@@ -28,13 +30,14 @@ from idaes_examples.mod.hda import hda_epcsaft_qualification as qual
 from idaes_examples.mod.hda import hda_two_flash_epcsaft as flowsheet
 from idaes_examples.mod.hda.epcsaft_eos import COMPONENTS, LIBRARY, NASA9, PARAMETERS, audit_row, mixture
 from idaes_examples.mod.hda.hda_epcsaft_kkt import kkt
-from idaes_examples.mod.hda.hda_epcsaft_VLE import ELEMENTS
+from idaes_examples.mod.hda.hda_epcsaft_VLE import ELEMENTS, NONCONDENSABLE
 
-RESULTS = Path(__file__).resolve().parents[3] / "hda_epcsaft_results"
+RESULTS = Path(__file__).resolve().parents[3] / "hda_epcsaft_results" / "campaign"
 FACTORS = (1.0, 0.1, 0.01)
 PP = flowsheet.PP
 ENVELOPE = (298.0, 800.0)  # K, HDA stream-state envelope
 STOICH = {"hydrogen": -1, "methane": 1, "benzene": 1, "toluene": -1}
+A1 = {"component_mol_s": 1e-7, "atom_mol_s": 1e-6, "energy_W": 1e-3}  # and pressure 1e-2 Pa
 
 
 def envelope_class(T):
@@ -54,13 +57,15 @@ def balances(m):
     units["M101"] = ([fs.M101.inlet_1_state[0], fs.M101.inlet_2_state[0], fs.M101.inlet_3_state[0]],
                      [fs.M101.mixed_state[0]], 0.0, 0.0)
     units["S101"] = ([fs.S101.mixed_state[0]], [fs.S101.purge_state[0], fs.S101.recycle_state[0]], 0.0, 0.0)
+    units.update({n: ([getattr(fs, n).properties_in[0]], [getattr(fs, n).properties_out[0]], 0.0, 0.0)
+                  for n in flowsheet.TRANSLATORS})
     units["flowsheet"] = ([fs.I101.properties[0], fs.I102.properties[0]],
                           [fs.P101.properties[0], fs.P102.properties[0], fs.P103.properties[0]],
                           extent, sum(duty.values()))
     out = {}
     for u, (ins, outs, ext, q) in units.items():
-        net = {c: value(sum(b.flow_mol_comp[c] for b in ins) - sum(b.flow_mol_comp[c] for b in outs)) + STOICH[c] * ext
-               for c in COMPONENTS}
+        net = {c: value(sum(b.flow_mol_comp[c] for b in ins if c in b.component_list) - sum(
+            b.flow_mol_comp[c] for b in outs if c in b.component_list)) + STOICH[c] * ext for c in COMPONENTS}
         atoms = {e: sum(ELEMENTS[c].get(e, 0) * (net[c] - STOICH[c] * ext) for c in COMPONENTS) for e in ("C", "H")}
         energy = value(sum(b.flow_mol_phase[p] * b.enth_mol_phase[p] for b in ins for p in b.phase_list)
                        - sum(b.flow_mol_phase[p] * b.enth_mol_phase[p] for b in outs for p in b.phase_list)) + q
@@ -78,6 +83,8 @@ def pressure_residuals(m):
         c = getattr(fs, u).control_volume
         dp = value(c.deltaP[0]) if hasattr(c, "deltaP") else 0.0
         res[u] = abs(value(c.properties_out[0].pressure - c.properties_in[0].pressure) - dp)
+    res.update({n: abs(value(getattr(fs, n).outlet.pressure[0] - getattr(fs, n).inlet.pressure[0]))
+                for n in flowsheet.TRANSLATORS})
     res["F101_deltaP_spec"] = abs(value(fs.F101.deltaP[0]))
     res["C101_outlet_spec"] = abs(value(fs.C101.outlet.pressure[0]) - 350000.0)
     inlets = [value(getattr(fs.M101, f"inlet_{k}_state")[0].pressure) for k in (1, 2, 3)]
@@ -88,37 +95,71 @@ def pressure_residuals(m):
 
 
 def audit(m, mix):
-    """Audit the dew point and the _teq point of every state block (public API only)."""
+    """Audit the dew, _teq and (F102 only) bubble points of every state block (public API only)."""
     rows = []
     for sb in m.component_data_objects(Block, descend_into=True):
         if not (isinstance(sb, StateBlockData) and hasattr(sb, "_teq")):
             continue
-        z = [value(sb.mole_frac_comp[c]) for c in COMPONENTS]
+        z = [value(sb.mole_frac_comp[c]) if c in sb.component_list else 0.0 for c in COMPONENTS]
         x = [value(sb.mole_frac_phase_comp["Liq", c]) if ("Liq", c) in sb.phase_component_set else 0.0
              for c in COMPONENTS]
-        y = [value(sb.mole_frac_phase_comp["Vap", c]) for c in COMPONENTS]
-        tdew = [value(sb._mole_frac_tdew[(*PP, c)]) if c in ("benzene", "toluene") else 0.0 for c in COMPONENTS]
+        y = [value(sb.mole_frac_phase_comp["Vap", c]) if c in sb.component_list else 0.0 for c in COMPONENTS]
+        incipient = lambda v: [0.0 if c in NONCONDENSABLE else value(v[(*PP, c)]) for c in COMPONENTS]  # noqa: E731
+        points = [("dew", value(sb.temperature_dew[PP]), incipient(sb._mole_frac_tdew), z), ("teq", value(sb._teq[PP]), x, y)]
+        if sb.component("_t1_Vap_Liq") is not None:  # SmoothVLE's bubble operation (component() builds nothing)
+            points.append(("bubble", value(sb.temperature_bubble[PP]), z, incipient(sb._mole_frac_tbub)))
         base = {"block": sb.name, "T_K": value(sb.temperature), "P_Pa": value(sb.pressure),
                 "T_class": envelope_class(value(sb.temperature)),
                 "vapor_fraction": value(sb.phase_frac["Vap"]), "liquid_fraction": value(sb.phase_frac["Liq"])}
-        for kind, T, xa, ya in (("dew", value(sb.temperature_dew[PP]), tdew, z), ("teq", value(sb._teq[PP]), x, y)):
+        for kind, T, xa, ya in points:
             a = audit_row(mix, T, value(sb.pressure), xa, ya)
             rows.append({**base, "point": kind, "T_point_K": T, "T_point_class": envelope_class(T),
                          "x": xa, "y": ya, **a})
     return rows
 
 
+def gas_dew(m, mix):
+    """M7: native dew temperature of the recycle gas (benzene/toluene liquid at pinned zero amount, P fixed, T
+    free from F101's _teq) at the to_gas and C101 outlets; at to_gas with F101 two-phase it must match _teq."""
+    f101, rows = m.fs.F101.control_volume.properties_out[0], []
+    teq, two_phase = value(f101._teq[PP]), value(f101.temperature) < value(f101.temperature_dew[PP])
+    for sb in (m.fs.to_gas.properties_out[0], m.fs.C101.control_volume.properties_out[0]):
+        y, T, P = [value(sb.mole_frac_phase_comp["Vap", c]) for c in COMPONENTS], value(sb.temperature), value(sb.pressure)
+        row = {"block": sb.name, "T_K": T, "P_Pa": P, "point": "gas_dew", "vapor_fraction": 1.0, "liquid_fraction": 0.0}
+        try:
+            r = solve_equilibrium(mix, Problem(phases=[Phase("V", kind="vapor", composition_guess=y), Phase(
+                "L", kind="liquid", support=("benzene", "toluene"), amount=Pinned(0.0))], T=Free(teq), P=P,
+                feed=MoleFractions(dict(zip(COMPONENTS, y)))))
+            assert r.success, r.message
+        except Exception as err:  # a refused dew solve is a stop (A10), never a substitute
+            rows.append({**row, "accepted": False, "m7_passed": False, "reason": f"dew solve refused: {err}"})
+            continue
+        Td, x = r.temperature[0], list(r.mole_fractions[4:])
+        consistency = abs(Td - teq) if two_phase and sb.parent_block() is m.fs.to_gas else 0.0
+        rows.append({**row, "T_point_K": Td, "x": x, "y": y, "margin_K": T - Td, "teq_consistency_K": consistency,
+                     "m7_passed": T - Td >= -1e-6 and consistency <= 1e-6, **audit_row(mix, Td, P, x, y)})
+    return rows
+
+
+def phase_amounts(m):
+    """M5: the smallest raw phase flow and phase_frac x flow_mol over every state block (mol/s)."""
+    sbs = [b for b in m.component_data_objects(Block, descend_into=True) if isinstance(b, StateBlockData)]
+    raw = min((value(b.flow_mol_phase[p]), b.name) for b in sbs for p in b.phase_list)
+    derived = min((value(b.phase_frac[p] * b.flow_mol), b.name) for b in sbs for p in b.phase_list)
+    return {"min_flow_mol_phase": raw, "min_phase_frac_x_flow_mol": derived, "passed": derived[0] >= -1e-7}
+
+
 def streams(m):
     """Stream and phase table of every arc: T, P, flows, phase fractions, compositions, densities."""
     rows = []
     for arc in m.fs.component_data_objects(Arc):
-        sb = arc.source.temperature[0].parent_block()
+        sb = arc.destination.temperature[0].parent_block()  # a flash outlet port shows its mixed state
         row = {"stream": arc.local_name, "from": arc.source.parent_block().local_name,
                "to": arc.destination.parent_block().local_name, "T_K": value(sb.temperature),
                "P_Pa": value(sb.pressure), "flow_mol_s": value(sb.flow_mol),
                "vapor_fraction": value(sb.phase_frac["Vap"])}
-        row.update({f"F_{c}": value(sb.flow_mol_comp[c]) for c in COMPONENTS})
-        for p in ("Liq", "Vap"):
+        row.update({f"F_{c}": value(sb.flow_mol_comp[c]) if c in sb.component_list else 0.0 for c in COMPONENTS})
+        for p in sb.phase_list:
             row.update({f"{p}_x_{c}": value(sb.mole_frac_phase_comp[p, c]) if (p, c) in sb.phase_component_set
                         else 0.0 for c in COMPONENTS})
             row[f"{p}_rho_mol_m3"] = value(sb.dens_mol_phase[p])
@@ -134,13 +175,24 @@ def signature(audit_rows):
             for r in audit_rows]
 
 
-def evidence(m, mix):
-    rows = audit(m, mix)
-    return {**flowsheet.summary(m), "balances": balances(m), "pressure_residuals_Pa": pressure_residuals(m),
-            "audit_accepted": all(r["accepted"] for r in rows),
-            "audit_rejected": [f'{r["block"]}:{r["point"]}:{r["reason"]}' for r in rows if not r["accepted"]],
-            "audit_max_fugacity_residual": max(r.get("fugacity_residual", float("inf")) for r in rows),
-            "_audit": rows, "_streams": streams(m), "_signature": signature(rows)}
+def evidence(m, mix, run):
+    """The solve record `run` and every per-point check. `gate` lists the failed D8 release conditions (O5:
+    termination and A1, and the M7 and unavailable-root stops; A8-A10 are recorded, not gated)."""
+    rows = audit(m, mix) + gas_dew(m, mix)
+    rec = {**run, **flowsheet.summary(m), "balances": balances(m), "pressure_residuals_Pa": pressure_residuals(m),
+           "audit_accepted": all(r["accepted"] for r in rows),
+           "audit_rejected": [f'{r["block"]}:{r["point"]}:{r["reason"]}' for r in rows if not r["accepted"]],
+           "audit_max_fugacity_residual": max(r.get("fugacity_residual", float("inf")) for r in rows),
+           "m7_passed": all(r["m7_passed"] for r in rows if "m7_passed" in r), "phase_amounts": phase_amounts(m),
+           "_audit": rows, "_streams": streams(m), "_signature": signature(rows)}
+    rec["streams_within_envelope"] = all(envelope_class(r["T_K"]) == "within" for r in rec["_streams"])
+    rec["a1_failed"] = [f"{u}:{k}" for u, r in rec["balances"].items() for k, lim in A1.items() if not r[k] <= lim] + [
+        k for k, v in rec["pressure_residuals_Pa"].items() if not v <= 1e-2]
+    rec["gate"] = [g for g, failed in (("termination", rec["termination"] != "convergenceCriteriaSatisfied"),
+                                       ("A1", rec["a1_failed"]), ("M7", not rec["m7_passed"]),
+                                       ("root unavailable", any("unavailable" in r["reason"] or "refused" in r["reason"]
+                                                                for r in rows))) if failed]
+    return rec
 
 
 def campaign(ref, mix, factor):
@@ -149,75 +201,55 @@ def campaign(ref, mix, factor):
     flowsheet.set_smoothing(m, factor)
     flowsheet.fix_simulation(m)
     flowsheet.initialize_from(m, ref)
-    sim = {"factor": factor, **flowsheet.solve(m), **evidence(m, mix)}
+    sim = {"factor": factor, **evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_simulation"))}
+    sim["bubble_blocks"] = [b.name for b in m.component_data_objects(Block, descend_into=True)  # S1: F102 only
+                            if b.component("temperature_bubble") is not None or b.component("_t1_Vap_Liq") is not None]
     print("simulation", factor, sim["termination"], sim["iterations"], round(sim["wall_s"]), flush=True)
     base = to_json(m, return_dict=True)
     opts = []
-    for start in flowsheet.STARTS:
+    for k, start in enumerate(flowsheet.STARTS, 1):
         # D8: reset to the solved simulation, square-solve at the start's decisions, then release them.
         from_json(m, sd=base)
         flowsheet.fix_simulation(m, start)
-        square = {**flowsheet.solve(m), **evidence(m, mix)}
+        square = evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_start{k}_square"))
         square["audit_rejected_rows"] = [r for r in square["_audit"] if not r["accepted"]]
-        if square["termination"] != "convergenceCriteriaSatisfied":
-            opts.append({"factor": factor, "start": start, "termination": "square solve failed",
+        if square["gate"]:
+            opts.append({"factor": factor, "start": start, "termination": "square solve not released",
                          "square": public(square)})
             continue
         flowsheet.set_optimization(m)
-        opts.append({**optimize(m, mix, factor, start), "square": public(square)})
+        opts.append({**optimize(m, mix, factor, start, f"{factor:g}_start{k}"), "square": public(square)})
     return sim, opts
 
 
-def optimize(m, mix, factor, start):
-    rec = {"factor": factor, "start": start, **flowsheet.solve(m)}
-    rec.update(evidence(m, mix))
+def optimize(m, mix, factor, start, case):
+    rec = {"factor": factor, "start": start, **evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{case}_optimization"))}
     rec["kkt"] = kkt(m, flowsheet.decisions(m))
+    rec["criteria"] = criteria(rec)
+    rec["qualified"] = all(c["passed"] for c in rec["criteria"].values())
     print("optimization", factor, start, rec["termination"], rec["iterations"], round(rec["wall_s"]),
-          rec["objective_USD_per_yr"], rec["kkt"]["label"], rec["kkt"]["norms"], flush=True)
+          rec["objective_USD_per_yr"], rec["kkt"]["label"], rec["qualified"], flush=True)
     return rec
 
 
-def continuation(factors=(1.0, 0.3, 0.1, 0.03, 0.01)):
-    """Smoothing continuation from each fixed start: the optimum at the default width, then each
-    smaller width warm-started (primal and multipliers) from the previous width's optimum, in
-    short steps. Writes continuation.json and continuation_primal_dual.csv.gz."""
-    mix = mixture()
-    ref = flowsheet.build("ideal")
-    flowsheet.initialize_ideal(ref)
-    flowsheet.solve(ref)
-    m = flowsheet.build("epcsaft")
-    flowsheet.fix_simulation(m)
-    flowsheet.initialize_from(m, ref)
-    flowsheet.solve(m)
-    base = to_json(m, return_dict=True)
-    runs, sens, primal_dual = [], [], []
-    for start in flowsheet.STARTS:
-        from_json(m, sd=base)
-        flowsheet.fix_simulation(m, start)
-        flowsheet.set_optimization(m)
-        for name in ("dual", "ipopt_zL_in", "ipopt_zU_in"):  # a cold solve at the default width
-            if hasattr(m, name):
-                m.del_component(name)
-        flowsheet.enable_warm_start(m)
-        path = []
-        for f in factors:
-            flowsheet.set_smoothing(m, f)
-            path.append(optimize(m, mix, f, start))
-            primal_dual += primal_dual_rows(path[-1], "start_" + "_".join(str(v) for v in start))
-            if path[-1]["termination"] != "convergenceCriteriaSatisfied":
-                break
-            # A warm re-solve at the same width refines the multipliers passed to the next width
-            # (a cold solve's final multipliers are a poor warm start in the degenerate rows).
-            path[-1]["multiplier_refinement"] = flowsheet.solve(m)
-        runs += path
-        sens += [{"factor": r["factor"], "case": f"start {start}", **compare(path[0], r)} for r in path[1:]]
-    out = {"provenance": provenance(), "runs": [public(r) for r in runs], "sensitivity": sens}
-    (RESULTS / "continuation.json").write_text(json.dumps(out, indent=1, default=float))
-    write_primal_dual("continuation_primal_dual.csv.gz", primal_dual)
+def criteria(rec):
+    """Per-attempt acceptance decision: value, limit and pass of A1, A2 (M1 exit), A4 (M2), A8-A10, A11 (M5), M7."""
+    k, bal, dp = rec["kkt"], {q: max(r[q] for r in rec["balances"].values()) for q in A1}, max(rec["pressure_residuals_Pa"].values())
+    out = {**{f"A1_{q}": (bal[q], lim, bal[q] <= lim) for q, lim in A1.items()}, "A1_pressure_Pa": (dp, 1e-2, dp <= 1e-2),
+           "M1_exit": (rec["exit"], "Optimal Solution Found.", rec["exit"] == "Optimal Solution Found."),
+           **{f"A2_{q}": (v, 1e-6, v <= 1e-6) for q, v in k["norms"].items()},
+           "A4_rank": ([k["counted_active"], k["singular_values"]["ratio"]], [4, 1e-8], k["singular_values"]["full_row_rank"]),
+           "A8_A9_audit": (rec["audit_rejected"], [], rec["audit_accepted"]),
+           "A10_streams": (rec["streams_within_envelope"], list(ENVELOPE), rec["streams_within_envelope"]),
+           "A11_M5": (rec["phase_amounts"]["min_phase_frac_x_flow_mol"][0], -1e-7, rec["phase_amounts"]["passed"]),
+           "M7": (min(r.get("margin_K", -1e300) for r in rec["_audit"] if r["point"] == "gas_dew"), -1e-6, rec["m7_passed"])}
+    return {name: {"value": v, "limit": lim, "passed": bool(ok)} for name, (v, lim, ok) in out.items()}
 
 
 def compare(ref, other):
     """Smoothing sensitivity of one solution versus the factor-1 solution (issue criteria)."""
+    if not all("duties_W" in r for r in (ref, other)):  # a square point that was not released
+        return {"passed": False, "failed": ["no solution"]}
     rel = lambda a, b, floor: abs(a - b) <= max(1e-3 * abs(a), floor)  # noqa: E731
     checks = {f"duty_{u}": rel(ref["duties_W"][u], other["duties_W"][u], 1.0) for u in ref["duties_W"]}
     checks["C101_work"] = rel(ref["C101_work_W"], other["C101_work_W"], 1.0)
@@ -235,14 +267,15 @@ def compare(ref, other):
 
 
 def compare_binary(ref_rows, rows):
-    """Binary path sensitivity: vapor fraction within 1e-4 and the same branches at each point."""
+    """Binary path sensitivity: vapor fraction within 1e-4 and the same branches at each point. The bubble
+    crossing (the row after the grid) is excluded from A7 and reported (M3, owner 2026-10-13)."""
     out = []
-    for a, b in zip(ref_rows, rows):
+    for i, (a, b) in enumerate(zip(ref_rows, rows)):
         same = all(a[f"{k}_branch_{p}"] == b[f"{k}_branch_{p}"] for k in ("bubble", "dew", "teq")
                    for p in ("liquid", "vapor"))
         dv = abs(a["vapor_fraction"] - b["vapor_fraction"])
         out.append({"factor": b["factor"], "T_K_ref": a["T_K"], "T_K": b["T_K"], "vapor_fraction_change": dv,
-                    "same_branches": same, "passed": same and dv <= 1e-4})
+                    "same_branches": same, "passed": same and dv <= 1e-4, "m3_excluded": i == len(qual.BINARY_GRID)})
     return out
 
 
@@ -270,11 +303,12 @@ def write_primal_dual(name, rows):
 def provenance():
     """Installed wheel, ASL library, inputs and this repository's commit (clean source tree)."""
     sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()  # noqa: E731
-    wheel = json.loads(next(Path(epcsaft.__file__).parent.parent.glob("epcsaft-*.dist-info"))
-                       .joinpath("direct_url.json").read_text())["url"].removeprefix("file://")
+    wheel = str(epcsaft.provenance()[0])  # raises unless a non-editable wheel file is installed (A13)
     git = lambda *a: subprocess.run(["git", *a], cwd=RESULTS.parent, capture_output=True, text=True).stdout.strip()  # noqa: E731
     return {"wheel": wheel, "wheel_sha256": sha(wheel), "asl_library_sha256": sha(LIBRARY),
             "parameters_sha256": sha(PARAMETERS), "nasa9_sha256": sha(NASA9), "python": sys.version.split()[0],
+            "idaes": version("idaes-pse"), "pyomo": version("pyomo"), "ipopt": flowsheet.Ipopt().version(),
+            "linear_solver": flowsheet.EPCSAFT_OPTIONS["linear_solver"], "run_kind": "acceptance",
             "downstream_commit": git("rev-parse", "HEAD"),
             "downstream_source_clean": git("status", "--porcelain", "--", "idaes_examples") == ""}
 
@@ -285,10 +319,11 @@ def public(rec):
 
 def main(factors=FACTORS):
     """Every result file is rewritten after each smoothing factor (partial runs keep evidence)."""
-    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / "ipopt").mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
     mix = mixture()
-    write_csv("property_transport.csv", qual.transport_rows(mix))
+    transport = qual.transport_rows(mix)
+    write_csv("property_transport.csv", transport)
     write_csv("callback_domain.csv", qual.callback_domain_rows())
     ideal_by_factor = {f: flowsheet.run_ideal_baseline(f)[1] for f in factors}  # also a smoothing control
     (RESULTS / "ideal_baseline.json").write_text(json.dumps(ideal_by_factor, indent=1))
@@ -321,9 +356,11 @@ def main(factors=FACTORS):
         if binary_sens:
             write_csv("binary_path_sensitivity.csv", binary_sens)
         write_primal_dual("optimization_primal_dual.csv.gz", primal_dual)
-        out = {"provenance": provenance(), "factors_done": done,
+        qualified = {g: sum(o.get("qualified", False) for o in opts if o["factor"] == g) for g in done}
+        out = {"provenance": provenance(), "factors_done": done, "transport_passed": all(r["passed"] for r in transport),
+               "qualified_starts": qualified, "A6_passed": all(n >= 2 for n in qualified.values()),
                "simulations": [public(sims[g]) for g in done], "optimizations": [public(o) for o in opts],
-               "sensitivity": sens, "binary_path_sensitivity_passed": all(r["passed"] for r in binary_sens),
+               "sensitivity": sens, "binary_path_sensitivity_passed": all(r["passed"] or r["m3_excluded"] for r in binary_sens),
                "ideal_baseline": {"simulation": public(ideal["simulation"]),
                                   "optimum": public(ideal["optimizations"][0])},
                "wall_s": time.perf_counter() - t0}
@@ -331,7 +368,4 @@ def main(factors=FACTORS):
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["continuation"]:
-        continuation()
-    else:
-        main(tuple(float(a) for a in sys.argv[1:]) or FACTORS)
+    main(tuple(float(a) for a in sys.argv[1:]) or FACTORS)

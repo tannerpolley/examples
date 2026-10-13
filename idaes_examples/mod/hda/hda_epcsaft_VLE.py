@@ -74,6 +74,15 @@ thermo_config = {
     "include_enthalpy_of_formation": False,  # the Engine enthalpy already carries it
 }
 
+# Split packages (owner, 2026-10-13), same Engine record: the recycle gas is vapor only, without phase equilibrium
+# (M7 checks its dew margin); the F102 train is benzene/toluene, so SmoothVLE builds T_bub (eps_1) and T_dew.
+_no_equilibrium = ("phases_in_equilibrium", "phase_equilibrium_state", "bubble_dew_method")
+thermo_config_gas = {**{k: v for k, v in thermo_config.items() if k not in _no_equilibrium},
+                     "phases": {"Vap": thermo_config["phases"]["Vap"]},
+                     "components": {c: {"type": Component, "elemental_composition": ELEMENTS[c], "parameter_data": {
+                         "mw": ideal_config["components"][c]["parameter_data"]["mw"]}} for c in COMPONENTS}}
+thermo_config_aromatics = {**thermo_config, "components": {c: _component(c) for c in ("benzene", "toluene")}}
+
 # The benzene/toluene binary (same Engine mixture, hydrogen and methane at weight 0.0) for the
 # temperature-path check: no non-condensables, so SmoothVLE builds both T_bub (eps_1) and T_dew
 # (eps_2). FTPx makes one fixed-(F, T, P, z) state block a complete flash.

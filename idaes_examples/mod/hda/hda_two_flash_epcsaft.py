@@ -6,9 +6,11 @@ objective with overhead-loss, benzene-production and purity constraints.
 """
 
 import time
+from pathlib import Path
 
-from pyomo.environ import (ConcreteModel, Constraint, Expression, Objective, Param, Suffix,
+from pyomo.environ import (Block, ConcreteModel, Constraint, Expression, Objective, Param,
                            TransformationFactory, Var, units as pyunits, value)
+from pyomo.util.calc_var_value import calculate_variable_from_constraint
 from pyomo.network import Arc
 from idaes.core import FlowsheetBlock
 from pyomo.contrib.solver.common.results import SolutionStatus
@@ -18,9 +20,12 @@ from idaes.core.util.model_statistics import degrees_of_freedom
 from idaes.models.properties.modular_properties.base.generic_property import GenericParameterBlock
 from idaes.models.properties.modular_properties.base.generic_reaction import (
     GenericReactionParameterBlock)
+from idaes.core import StateBlockData
+from idaes.core.util.initialization import propagate_state
+from idaes.models.properties.modular_properties.base.generic_property import _init_Tbub
+from idaes.models.properties.modular_properties.phase_equil import SmoothVLE
 from idaes.models.unit_models import (Feed, Flash, Heater, Mixer, PressureChanger, Product,
-                                      Separator, StoichiometricReactor)
-from idaes.models.unit_models.separator import EnergySplittingType
+                                      Separator, StoichiometricReactor, Translator)
 from idaes.models.unit_models.pressure_changer import ThermodynamicAssumption
 
 from idaes_examples.mod.hda import hda_epcsaft_VLE, hda_ideal_VLE_modular
@@ -35,6 +40,7 @@ UNIT_SCALES = ((pyunits.K, 300.0), (pyunits.Pa, 1e5), (pyunits.mol / pyunits.s, 
                (pyunits.W, 1e4), (pyunits.dimensionless, 1.0),  # issue #73 fixed KKT scales
                (pyunits.J / pyunits.mol, 1e4))  # the issue's enthalpy comparison scale
 OBJECTIVE_SCALE = 1e5  # USD/yr
+TRANSLATORS = ("to_gas", "to_aromatics", "to_full")  # full -> gas, full -> aromatics, gas -> full
 STARTS = ((550, 325, 375, 107500), (500, 300, 350, 105000), (600, 400, 425, 110000))
 SOLVER_OPTIONS = {"nlp_scaling_method": "user-scaling", "ma57_automatic_scaling": "yes",
                   "max_iter": 1000, "tol": 1e-8, "bound_relax_factor": 0.0, "linear_solver": "ma57"}
@@ -47,9 +53,6 @@ SOLVER_OPTIONS = {"nlp_scaling_method": "user-scaling", "ma57_automatic_scaling"
 EPCSAFT_OPTIONS = {**SOLVER_OPTIONS, "constr_viol_tol": 1e-9, "mu_strategy": "adaptive",
                    "dual_inf_tol": 1e-6, "compl_inf_tol": 1e-6,
                    "max_iter": 400, "max_cpu_time": 1800}  # caps: 2x the largest converged run
-# Warm start from a previous solution's primal and multipliers without pushing it off its bounds.
-WARM_START_OPTIONS = {"warm_start_init_point": "yes", "warm_start_bound_push": 1e-8,
-                      "warm_start_mult_bound_push": 1e-8, "mu_init": 1e-8}
 
 
 def build(package="ideal"):
@@ -59,7 +62,10 @@ def build(package="ideal"):
     m.fs = FlowsheetBlock(dynamic=False)
     cfg = (hda_ideal_VLE_modular if package == "ideal" else hda_epcsaft_VLE).thermo_config
     fs = m.fs
-    fs.thermo_params = props = GenericParameterBlock(**cfg)
+    fs.thermo_params = props = gas = aromatics = GenericParameterBlock(**cfg)
+    if package == "epcsaft":  # split packages joined by translators (owner, 2026-10-13)
+        fs.gas_params = gas = GenericParameterBlock(**hda_epcsaft_VLE.thermo_config_gas)
+        fs.aromatics_params = aromatics = GenericParameterBlock(**hda_epcsaft_VLE.thermo_config_aromatics)
     fs.reaction_params = GenericReactionParameterBlock(property_package=props, **reaction_config)
     fs.I101, fs.I102 = Feed(property_package=props), Feed(property_package=props)
     fs.M101 = Mixer(property_package=props, num_inlets=3)
@@ -69,24 +75,28 @@ def build(package="ideal"):
                                     has_heat_of_reaction=package == "ideal", has_heat_transfer=True,
                                     has_pressure_change=False)
     fs.F101 = Flash(property_package=props, has_heat_transfer=True, has_pressure_change=True)
-    # ePC-SAFT: the splitter conserves energy exactly (equal molar enthalpy). With equal
-    # temperature its re-flashed saturated outlets differ from the inlet by the O(eps_2)
-    # SmoothVLE liquid (0.05 W at the default width) and IDAES writes no splitter energy balance.
-    split = {} if package == "ideal" else {"energy_split_basis": EnergySplittingType.equal_molar_enthalpy}
-    fs.S101 = Separator(property_package=props, ideal_separation=False,
-                        outlet_list=["purge", "recycle"], **split)
-    fs.C101 = PressureChanger(property_package=props, compressor=True,
+    fs.S101 = Separator(property_package=gas, ideal_separation=False, outlet_list=["purge", "recycle"])
+    fs.C101 = PressureChanger(property_package=gas, compressor=True,
                               thermodynamic_assumption=ThermodynamicAssumption.isothermal)
-    fs.F102 = Flash(property_package=props, has_heat_transfer=True, has_pressure_change=True)
-    fs.P101, fs.P102, fs.P103 = (Product(property_package=props) for _ in range(3))
-    for name, (src, dst) in {
+    fs.F102 = Flash(property_package=aromatics, has_heat_transfer=True, has_pressure_change=True)
+    fs.P101, fs.P102 = (Product(property_package=aromatics) for _ in range(2))
+    fs.P103 = Product(property_package=gas)
+    arcs = {
         "s01": (fs.I101.outlet, fs.M101.inlet_1), "s02": (fs.I102.outlet, fs.M101.inlet_2),
         "s03": (fs.M101.outlet, fs.H101.inlet), "s04": (fs.H101.outlet, fs.R101.inlet),
         "s05": (fs.R101.outlet, fs.F101.inlet), "s06": (fs.F101.vap_outlet, fs.S101.inlet),
         "s07": (fs.F101.liq_outlet, fs.F102.inlet), "s08": (fs.S101.recycle, fs.C101.inlet),
         "s09": (fs.C101.outlet, fs.M101.inlet_3), "s10": (fs.F102.vap_outlet, fs.P101.inlet),
         "s11": (fs.F102.liq_outlet, fs.P102.inlet), "s12": (fs.S101.purge, fs.P103.inlet),
-    }.items():
+    }
+    if package == "epcsaft":
+        for arc, name, pin, pout, phase in zip(("s06", "s07", "s09"), TRANSLATORS, (props, props, gas),
+                                               (gas, aromatics, props), ("Vap", "Liq", "Vap")):
+            setattr(fs, name, tr := Translator(inlet_property_package=pin, outlet_property_package=pout))
+            src, dst = arcs.pop(arc)
+            arcs[arc + "a"], arcs[arc + "b"] = (src, tr.inlet), (tr.outlet, dst)
+            _translate(tr, phase)
+    for name, (src, dst) in arcs.items():
         fs.add_component(name, Arc(source=src, destination=dst))
     TransformationFactory("network.expand_arcs").apply_to(m)
 
@@ -114,19 +124,29 @@ def build(package="ideal"):
     return m
 
 
+def _translate(tr, phase):
+    """Outlet = inlet for T, P, the present phase's flow and composition; the absent phase is an exact zero flow at
+    the equimolar composition (O4). No energy row: both sides evaluate one callback row at identical arguments."""
+    i, o = tr.properties_in[0], tr.properties_out[0]
+    pairs = [(o.temperature, i.temperature), (o.pressure, i.pressure), (o.flow_mol_phase[phase], i.flow_mol_phase[phase])]
+    pairs += [(o.mole_frac_phase_comp[phase, c], i.mole_frac_phase_comp[phase, c]) for c in o.component_list]
+    tr.copy = Constraint(range(len(pairs)), rule=lambda b, k: pairs[k][0] == pairs[k][1])
+    for p, c in o.phase_component_set:
+        if p != phase:
+            o.flow_mol_phase[p].fix(0.0)
+            o.mole_frac_phase_comp[p, c].fix(0.5)
+
+
 def _epcsaft_numerics(m):
-    """Scaling, trace-flow placeholders and bounds for the interior-point solve with ePC-SAFT."""
+    """Scaling, absent-phase flows and bounds for the interior-point solve with ePC-SAFT."""
     fs = m.fs
     set_unit_scaling(m)
-    # An ideal-separation outlet carries the absent phase at eps_flow (IDAES: 1e-8 mol/s, a ~1e-3 W
-    # leak). F101: 1e-9 keeps the hydrogen/methane fractions of the F102 train near 1e-9, inside
-    # their 1e-20 bounds (at 0 the balances force them below the bound and the bound multipliers
-    # diverge). F102: 0, since a second leak would put the liquid product's hydrogen near 1e-17,
-    # below double-precision resolution; those two fractions are exactly 0 (bound 0).
-    fs.F101.split.eps_flow.set_value(1e-9)
+    # Ideal-separation outlets carry the absent phase as an exact zero; the F101 liquid then has
+    # exactly zero hydrogen and methane, at their lower bound 0 (not fixed: their defining rows stay).
+    fs.F101.split.eps_flow.set_value(0.0)
     fs.F102.split.eps_flow.set_value(0.0)
     for c in NONCONDENSABLE:
-        fs.P102.properties[0].mole_frac_comp[c].setlb(0.0)
+        fs.to_aromatics.properties_in[0].mole_frac_comp[c].setlb(0.0)
     # bound_relax_factor = 0 keeps every composition weight inside the callback domain. Phase flows
     # and fractions are never callback inputs; they get Ipopt's default 1e-8 lower-bound relaxation
     # explicitly, because SmoothVLE leaves superheated streams a liquid of O(eps_2^2 / (T - T_dew))
@@ -219,35 +239,36 @@ def initialize_from(m, ref):
         r = ref.find_component(v.name)
         if r is not None and not v.fixed and r.value is not None:
             v.set_value(r.value)
+    for arc in ("s06", "s07", "s09"):  # translators (no ideal counterpart) take both neighbours' states
+        propagate_state(arc=getattr(m.fs, arc + "a"))
+        propagate_state(arc=getattr(m.fs, arc + "b"), direction="backward")
+    for sb in (b for b in m.component_data_objects(Block, descend_into=True) if isinstance(b, StateBlockData)):
+        for v, c in [*((sb.mole_frac_comp[j], sb.mole_frac_comp_eq[j]) for j in sb.component_list),
+                     *((sb.phase_frac[p], sb.phase_fraction_constraint[p]) for p in sb.phase_list)]:
+            calculate_variable_from_constraint(v, c)
+    _init_Tbub(m.fs.F102.control_volume.properties_out[0], pyunits.K)  # F102's bubble operation: IDAES's seed
+    SmoothVLE.calculate_teq(m.fs.F102.control_volume.properties_out[0], PP)
     fix_inlet_states(m)
 
 
-def enable_warm_start(m):
-    """Export suffixes that carry each solve's multipliers into the next solve, which then uses
-    Ipopt's warm start (WARM_START_OPTIONS) instead of its default interior initial point."""
-    for name in ("dual", "ipopt_zL_in", "ipopt_zU_in"):
-        m.add_component(name, Suffix(direction=Suffix.EXPORT))
-
-
-def solve(m, tee=False):
-    """IDAES ipopt_v2 settings (scaled NL writer, linear presolve, MA57); returns solver evidence."""
+def solve(m, tee=False, log=None):
+    """IDAES ipopt_v2 settings (scaled NL writer, linear presolve, MA57); returns solver evidence.
+    `log` keeps Ipopt's output file <log>.ipopt and its stdout/stderr (callback failures) <log>.log."""
     options = SOLVER_OPTIONS if m.package == "ideal" else EPCSAFT_OPTIONS
-    warm = hasattr(m, "ipopt_zL_in") and len(m.ipopt_zL_in) > 0
+    if log:
+        options = {**options, "output_file": f"{log}.ipopt", "file_print_level": 5, "print_user_options": "yes"}
     t0 = time.perf_counter()
     res = Ipopt().solve(m, tee=tee, load_solutions=False, raise_exception_on_nonoptimal_result=False,
-                        solver_options={**options, **WARM_START_OPTIONS} if warm else options,
-                        writer_config={"scale_model": True, "linear_presolve": True})
+                        solver_options=options, writer_config={"scale_model": True, "linear_presolve": True})
     wall = time.perf_counter() - t0
     if res.solution_status != SolutionStatus.noSolution:
         res.solution_loader.load_vars()
-        if hasattr(m, "ipopt_zL_in"):  # keep the multipliers, in the writer's scaled terms for z
-            m.dual.update(res.solution_loader.get_duals())
-            obj_scale = iscale.get_scaling_factor(m.fs.objective, default=1)
-            for v, z in res.solution_loader.get_reduced_costs().items():
-                zs = z * obj_scale / iscale.get_scaling_factor(v, default=1)
-                m.ipopt_zL_in[v], m.ipopt_zU_in[v] = max(zs, 0.0), min(zs, 0.0)
-    return {"termination": res.termination_condition.name, "iterations": res.extra_info.iteration_count,
-            "wall_s": wall, "warm_start": warm}
+    out = {"termination": res.termination_condition.name, "iterations": res.extra_info.iteration_count, "wall_s": wall}
+    if log:
+        Path(f"{log}.log").write_text(res.solver_log)
+        out.update(exit=Path(f"{log}.ipopt").read_text().partition("EXIT: ")[2].split("\n")[0].strip(),
+                   command_line=res.extra_info.command_line, return_code=res.extra_info.return_code)
+    return out
 
 
 def summary(m):

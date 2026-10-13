@@ -14,7 +14,7 @@ from idaes.models.properties.modular_properties.base.generic_property import Gen
 
 from idaes_examples.mod.hda import hda_two_flash_epcsaft as flowsheet
 from idaes_examples.mod.hda.epcsaft_eos import COMPONENTS, PHASES, ROWS, audit_row
-from idaes_examples.mod.hda.hda_epcsaft_VLE import thermo_config, thermo_config_binary
+from idaes_examples.mod.hda.hda_epcsaft_VLE import thermo_config, thermo_config_aromatics, thermo_config_binary
 
 PP = flowsheet.PP
 LIQUID_ABSENT = ("hydrogen", "methane")
@@ -23,7 +23,9 @@ TRANSPORT_STATES = (  # (T, P, weights [H2, CH4, benzene, toluene]) from the iss
     ("liquid_feed", 303.2, 350000.0, (1e-5, 1e-5, 1e-5, 0.30)),
     ("asymmetric", 600.0, 350000.0, (0.10, 0.05, 0.25, 0.60)),
     ("separator_F101", 325.0, 350000.0, (0.05, 0.10, 0.45, 0.40)),
-    ("separator_F102", 375.0, 105000.0, (0.05, 0.10, 0.45, 0.40)))
+    ("separator_F102", 375.0, 105000.0, (0.05, 0.10, 0.45, 0.40)),
+    # The F102 train's aromatics package (zero hydrogen and methane weights in both phases).
+    ("aromatics_F102", 363.3, 105000.0, {"Liq": (0, 0, 0.6447, 0.3553), "Vap": (0, 0, 0.8163, 0.1837)}))
 BINARY_P, BINARY_Z = 105000.0, (0.5, 0.5)
 BINARY_GRID = [300.0 + 5 * k for k in range(31)]
 
@@ -47,12 +49,13 @@ def transport_rows(mix):
     ln phi_i there include the exact infinite-dilution limits for hydrogen and methane."""
     rows = []
     for name, T, P, w in TRANSPORT_STATES:
-        m, sb = state_block(thermo_config, defined_state=False)  # a flash block: has _teq
+        m, sb = state_block(thermo_config_aromatics if isinstance(w, dict) else thermo_config, defined_state=False)
         sb.temperature.set_value(T)
         sb.pressure.set_value(P)
         sb._teq[PP].set_value(T)
         for p, phase in (("Liq", "liquid"), ("Vap", "vapor")):
-            x = _normalized([0.0 if (p == "Liq" and c in LIQUID_ABSENT) else v for c, v in zip(COMPONENTS, w)])
+            x = _normalized(w[p] if isinstance(w, dict) else
+                            [0.0 if (p == "Liq" and c in LIQUID_ABSENT) else v for c, v in zip(COMPONENTS, w)])
             for c, v in zip(COMPONENTS, x):
                 if (p, c) in sb.phase_component_set:
                     sb.mole_frac_phase_comp[p, c].set_value(v)

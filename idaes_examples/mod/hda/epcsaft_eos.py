@@ -167,7 +167,8 @@ def audit_row(mix, T, P, x, y, eq=(2, 3)):
     [1e-12, 1], any fraction outside [0, 1] or nonfinite, phase sums off by > 1e-10;
     unavailable roots; one shared root; compositions closer than 1e-3 (trivial y = x
     branch); a declared liquid that is not the denser phase by mass;
-    max over eq of |ln x_i + ln phi_i^L - ln y_i - ln phi_i^V| > 1e-8.
+    max over eq of |ln x_i + ln phi_i^L - ln y_i - ln phi_i^V| > 1e-8; a root with dP/drho <= 0 or
+    |P_calc - P| > max(1e-2 Pa, 1e-10 P) (A9).
     """
     row = {"fractions_ok": all(X_MIN <= z[i] <= 1 for z in (x, y) for i in eq)
            and all(0 <= v <= 1 for v in (*x, *y))
@@ -187,10 +188,14 @@ def audit_row(mix, T, P, x, y, eq=(2, 3)):
         mass_ordered=liq.molar_density * sum(a * m for a, m in zip(x, mw))
         > vap.molar_density * sum(a * m for a, m in zip(y, mw)),
         fugacity_residual=max(abs(math.log(x[i]) + liq.log_fugacity_coefficient[i] - math.log(y[i])
-                                  - vap.log_fugacity_coefficient[i]) for i in eq))
+                                  - vap.log_fugacity_coefficient[i]) for i in eq),
+        stable_roots_liquid=liq.stable_root_count, stable_roots_vapor=vap.stable_root_count,
+        pressure_error_Pa=max(abs(s.pressure - P) for s in (liq, vap)),
+        dP_drho_min=min(s.pressure_density_derivative for s in (liq, vap)))
     checks = {"fractions": row["fractions_ok"], "distinct_root": not row["shared_root"],
               "composition_distance": row["composition_distance"] >= 1e-3,
-              "mass_ordered": row["mass_ordered"], "residual": row["fugacity_residual"] <= 1e-8}
+              "mass_ordered": row["mass_ordered"], "residual": row["fugacity_residual"] <= 1e-8,
+              "roots": row["dP_drho_min"] > 0 and row["pressure_error_Pa"] <= max(1e-2, 1e-10 * P)}  # A9
     row["accepted"] = all(checks.values())
     row["reason"] = ",".join(k for k, ok in checks.items() if not ok)
     return row
