@@ -212,6 +212,12 @@ def campaign(ref, mix, factor):
         from_json(m, sd=base)
         flowsheet.fix_simulation(m, start)
         square = evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_start{k}_square"))
+        o, T = m.fs.F102.control_volume.properties_out[0], flowsheet.decisions(m)[2]  # decision 2: a start F102 T
+        tb, td = value(o.temperature_bubble[PP]), value(o.temperature_dew[PP])  # outside [T_bub, T_dew] moves to
+        if not tb <= start[2] <= td:  # their midpoint, square-solved again before release
+            T.fix((tb + td) / 2)
+            square = evidence(m, mix, flowsheet.solve(m, log=RESULTS / f"ipopt/{factor:g}_start{k}_square_inside"))
+        square["F102_start_K"] = {"declared": start[2], "T_bub": tb, "T_dew": td, "used": value(T)}
         square["audit_rejected_rows"] = [r for r in square["_audit"] if not r["accepted"]]
         if square["gate"]:
             opts.append({"factor": factor, "start": start, "termination": "square solve not released",
