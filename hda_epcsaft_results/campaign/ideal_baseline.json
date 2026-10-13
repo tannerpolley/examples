@@ -3,7 +3,7 @@
   "simulation": {
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 6,
-   "wall_s": 0.06839934999970865,
+   "wall_s": 0.03406159699989075,
    "objective_USD_per_yr": 419008.2803967104,
    "decisions": [
     600,
@@ -37,7 +37,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 22,
-    "wall_s": 0.07597298899963789,
+    "wall_s": 0.06144406700059335,
     "objective_USD_per_yr": 312674.2455516808,
     "decisions": [
      500.0000000000027,
@@ -70,7 +70,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 28,
-    "wall_s": 0.08259943399934855,
+    "wall_s": 0.07310504500037496,
     "objective_USD_per_yr": 312674.24555167434,
     "decisions": [
      500.00000000000097,
@@ -103,7 +103,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 417,
-    "wall_s": 0.7283066970003347,
+    "wall_s": 0.6630258260001938,
     "objective_USD_per_yr": 312674.24555167416,
     "decisions": [
      500.00000000000097,
@@ -132,7 +132,7 @@
   "simulation": {
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 6,
-   "wall_s": 0.04106167899954016,
+   "wall_s": 0.03559019100066507,
    "objective_USD_per_yr": 419008.04862803716,
    "decisions": [
     600,
@@ -166,7 +166,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 24,
-    "wall_s": 0.08015675800015742,
+    "wall_s": 0.07640219299992168,
     "objective_USD_per_yr": 312674.15231306886,
     "decisions": [
      500.0000000000027,
@@ -199,7 +199,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 32,
-    "wall_s": 0.0966490890004934,
+    "wall_s": 0.08764769200024602,
     "objective_USD_per_yr": 312674.15231306234,
     "decisions": [
      500.00000000000097,
@@ -232,7 +232,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "locallyInfeasible",
     "iterations": 367,
-    "wall_s": 0.605819318999238,
+    "wall_s": 0.5521754780002084,
     "objective_USD_per_yr": 143446.40546833578,
     "decisions": [
      500.0000027275388,
@@ -261,7 +261,7 @@
   "simulation": {
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 6,
-   "wall_s": 0.04030472400063445,
+   "wall_s": 0.037807613000040874,
    "objective_USD_per_yr": 419008.02558266,
    "decisions": [
     600,
@@ -295,7 +295,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 42,
-    "wall_s": 0.11548525000034715,
+    "wall_s": 0.0973992070003078,
     "objective_USD_per_yr": 312674.14332574984,
     "decisions": [
      500.0000000000027,
@@ -328,7 +328,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 56,
-    "wall_s": 0.16803494800024055,
+    "wall_s": 0.14244600300025922,
     "objective_USD_per_yr": 312674.1433257435,
     "decisions": [
      500.00000000000097,
@@ -361,7 +361,7 @@
     "start_square_solve": "convergenceCriteriaSatisfied",
     "termination": "locallyInfeasible",
     "iterations": 127,
-    "wall_s": 0.2273978299999726,
+    "wall_s": 0.20268474600015907,
     "objective_USD_per_yr": 214574.03403071695,
     "decisions": [
      599.1151241358023,
