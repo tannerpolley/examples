@@ -268,7 +268,9 @@ def solve(m, tee=False, log=None):
     out = {"termination": res.termination_condition.name, "iterations": res.extra_info.iteration_count, "wall_s": wall}
     if log:
         Path(f"{log}.log").write_text(res.solver_log)
-        out.update(exit=Path(f"{log}.ipopt").read_text().partition("EXIT: ")[2].split("\n")[0].strip(),
+        text = Path(f"{log}.ipopt").read_text()  # M1's primal test: Ipopt's final constraint violation (scaled model)
+        viol = text.partition("Constraint violation....:")[2].split()[1:2] or ["inf"]
+        out.update(exit=text.partition("EXIT: ")[2].split("\n")[0].strip(), primal_infeasibility=float(viol[0]),
                    command_line=res.extra_info.command_line, return_code=res.extra_info.return_code)
     return out
 

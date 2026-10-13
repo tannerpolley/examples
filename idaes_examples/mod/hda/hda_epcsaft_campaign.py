@@ -178,7 +178,7 @@ def signature(audit_rows):
 def evidence(m, mix, run):
     """The solve record `run` and every per-point check. `gate` lists the failed D8 release conditions (O5:
     termination and A1, and the M7 and unavailable-root stops; A8-A10 are recorded, not gated)."""
-    rows = audit(m, mix) + gas_dew(m, mix)
+    rows = [{**r, "primal_infeasibility": run["primal_infeasibility"]} for r in audit(m, mix) + gas_dew(m, mix)]
     rec = {**run, **flowsheet.summary(m), "balances": balances(m), "pressure_residuals_Pa": pressure_residuals(m),
            "audit_accepted": all(r["accepted"] for r in rows),
            "audit_rejected": [f'{r["block"]}:{r["point"]}:{r["reason"]}' for r in rows if not r["accepted"]],
@@ -188,8 +188,8 @@ def evidence(m, mix, run):
     rec["streams_within_envelope"] = all(envelope_class(r["T_K"]) == "within" for r in rec["_streams"])
     rec["a1_failed"] = [f"{u}:{k}" for u, r in rec["balances"].items() for k, lim in A1.items() if not r[k] <= lim] + [
         k for k, v in rec["pressure_residuals_Pa"].items() if not v <= 1e-2]
-    m7_stop = any(r.get("margin_K", -1.0) < -1e-6 or (not r["m7_passed"] and run["termination"] == "convergenceCriteriaSatisfied")
-                  for r in rows if r["point"] == "gas_dew")  # consistency stops only at converged points (#73, 2026-10-13)
+    m7_stop = any(r.get("margin_K", -1.0) < -1e-6 or (not r["m7_passed"] and r["primal_infeasibility"]  # consistency stops
+                  <= flowsheet.EPCSAFT_OPTIONS["constr_viol_tol"]) for r in rows if r["point"] == "gas_dew")  # only where M1's primal test passes
     rec["gate"] = [g for g, failed in (("termination", rec["termination"] != "convergenceCriteriaSatisfied"),
                                        ("A1", rec["a1_failed"]), ("M7", m7_stop),
                                        ("root unavailable", any("unavailable" in r["reason"] or "refused" in r["reason"]
