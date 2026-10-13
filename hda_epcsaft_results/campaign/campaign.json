@@ -15,7 +15,7 @@
   ],
   "linear_solver": "ma57",
   "run_kind": "acceptance",
-  "downstream_commit": "c5361dbc71192467ecae3c2a249f3568a96babb8",
+  "downstream_commit": "f0f5ded8c61c84d4cc9b2e4a1df59398aa5e70f6",
   "downstream_source_clean": true
  },
  "factors_done": [
@@ -35,11 +35,11 @@
    "factor": 1.0,
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 5,
-   "wall_s": 3.705455575999622,
+   "wall_s": 4.781360884999231,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpofdvzpsv/unknownr4qj1no8.nl",
+    "/tmp/tmp5e731ub7/unknowntq98b174.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -54,7 +54,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_simulation.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpofdvzpsv/unknownr4qj1no8.opt\""
+    "option_file_name=\"/tmp/tmp5e731ub7/unknowntq98b174.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 405416.87159496854,
@@ -190,11 +190,11 @@
    "factor": 0.1,
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 5,
-   "wall_s": 3.9642533650003315,
+   "wall_s": 3.633002602000488,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmprg4kefyh/unknownrxcyc2u7.nl",
+    "/tmp/tmpi4bxbwz5/unknownaospqkwu.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -209,7 +209,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_simulation.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmprg4kefyh/unknownrxcyc2u7.opt\""
+    "option_file_name=\"/tmp/tmpi4bxbwz5/unknownaospqkwu.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 405416.7754611214,
@@ -345,11 +345,11 @@
    "factor": 0.01,
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 5,
-   "wall_s": 3.6403156590004073,
+   "wall_s": 4.2270234289990185,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp4cg76tmy/unknowng1yaulta.nl",
+    "/tmp/tmpbmpikot3/unknown7y73c9tq.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -364,7 +364,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_simulation.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp4cg76tmy/unknowng1yaulta.opt\""
+    "option_file_name=\"/tmp/tmpbmpikot3/unknown7y73c9tq.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 405416.7744997838,
@@ -508,11 +508,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 14,
-   "wall_s": 10.98618183599956,
+   "wall_s": 11.864842921999298,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp0e_vc7a_/unknownmwe0qxy_.nl",
+    "/tmp/tmpzkkiv99e/unknown4zjygvy2.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -527,7 +527,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start1_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp0e_vc7a_/unknownmwe0qxy_.opt\""
+    "option_file_name=\"/tmp/tmpzkkiv99e/unknown4zjygvy2.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0263684722,
@@ -1689,11 +1689,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 11,
-    "wall_s": 9.8349709109998,
+    "wall_s": 10.915562828000475,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpe3t8y0yv/unknownin1g0hea.nl",
+     "/tmp/tmpn3ay1ngz/unknownhhkba78q.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -1708,7 +1708,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start1_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpe3t8y0yv/unknownin1g0hea.opt\""
+     "option_file_name=\"/tmp/tmpn3ay1ngz/unknownhhkba78q.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 347525.7033149204,
@@ -1842,6 +1842,7 @@
      "T_dew": 365.99117658219456,
      "used": 363.4548050768348
     },
+    "initial_stops": [],
     "audit_rejected_rows": []
    }
   },
@@ -1855,11 +1856,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 11,
-   "wall_s": 8.352764248000312,
+   "wall_s": 8.28241012899889,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpt92piaqg/unknownjd6uy8e9.nl",
+    "/tmp/tmpntg00lvj/unknown3msu0cto.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -1874,7 +1875,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start2_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpt92piaqg/unknownjd6uy8e9.opt\""
+    "option_file_name=\"/tmp/tmpntg00lvj/unknown3msu0cto.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.02636847115,
@@ -3036,11 +3037,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 9,
-    "wall_s": 6.295817313000043,
+    "wall_s": 6.7110658590008825,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpaic2edul/unknownbc_3ye73.nl",
+     "/tmp/tmp221bcbp2/unknownfdoh_9ge.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -3055,7 +3056,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start2_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpaic2edul/unknownbc_3ye73.opt\""
+     "option_file_name=\"/tmp/tmp221bcbp2/unknownfdoh_9ge.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 298579.1799633017,
@@ -3189,6 +3190,7 @@
      "T_dew": 365.6422637802313,
      "used": 363.0363030457968
     },
+    "initial_stops": [],
     "audit_rejected_rows": []
    }
   },
@@ -3202,11 +3204,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 85,
-   "wall_s": 143.4605920489994,
+   "wall_s": 143.64713270899847,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpwajp9l8l/unknown1itoasfw.nl",
+    "/tmp/tmpngqszscy/unknown2civd9qe.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -3221,7 +3223,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start3_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpwajp9l8l/unknown1itoasfw.opt\""
+    "option_file_name=\"/tmp/tmpngqszscy/unknown2civd9qe.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0263684698,
@@ -4267,7 +4269,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 163475.70673775408,
+    "state_jacobian_condition_1norm": 124990.95853070369,
     "singular_values": {
      "min": 0.0056455985582929595,
      "max": 320.30186177555214,
@@ -4383,11 +4385,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 16,
-    "wall_s": 12.144232319999901,
+    "wall_s": 12.011381255000742,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpt3jvv3v6/unknownsdue6lz5.nl",
+     "/tmp/tmp0utatf7f/unknownk0k4nb_l.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -4402,7 +4404,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start3_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpt3jvv3v6/unknownsdue6lz5.opt\""
+     "option_file_name=\"/tmp/tmp0utatf7f/unknownk0k4nb_l.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 555767.5087058228,
@@ -4539,6 +4541,7 @@
      "T_dew": 366.3188742638632,
      "used": 364.09679114806795
     },
+    "initial_stops": [],
     "audit_rejected_rows": [
      {
       "block": "fs.F102.control_volume.properties_out[0.0]",
@@ -4631,11 +4634,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 23,
-   "wall_s": 26.2319839210013,
+   "wall_s": 26.671875948999514,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpbfdsxn8b/unknownidf1k3s8.nl",
+    "/tmp/tmp8y_2ux74/unknownefulx2wo.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -4650,7 +4653,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start1_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpbfdsxn8b/unknownidf1k3s8.opt\""
+    "option_file_name=\"/tmp/tmp8y_2ux74/unknownefulx2wo.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282298034,
@@ -5696,7 +5699,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 139232.7795769406,
+    "state_jacobian_condition_1norm": 163475.70655293387,
     "singular_values": {
      "min": 0.005645598558381686,
      "max": 320.3018617778729,
@@ -5812,11 +5815,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 11,
-    "wall_s": 9.767605202001505,
+    "wall_s": 9.857238061000317,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmp6nxp7299/unknownx3_uvkrz.nl",
+     "/tmp/tmpn8plwiv0/unknownna50tvj5.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -5831,7 +5834,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start1_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmp6nxp7299/unknownx3_uvkrz.opt\""
+     "option_file_name=\"/tmp/tmpn8plwiv0/unknownna50tvj5.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 347525.6143702243,
@@ -5965,6 +5968,7 @@
      "T_dew": 365.9911765821177,
      "used": 363.4548050767788
     },
+    "initial_stops": [],
     "audit_rejected_rows": []
    }
   },
@@ -5978,11 +5982,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 72,
-   "wall_s": 103.2475746070013,
+   "wall_s": 102.09233452300032,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpv3okhkom/unknownflewmgww.nl",
+    "/tmp/tmpltx1todw/unknown9h2pdjgm.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -5997,7 +6001,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start2_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpv3okhkom/unknownflewmgww.opt\""
+    "option_file_name=\"/tmp/tmpltx1todw/unknown9h2pdjgm.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282296265,
@@ -7043,7 +7047,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 139232.77957594767,
+    "state_jacobian_condition_1norm": 163475.7065518565,
     "singular_values": {
      "min": 0.00564559855838003,
      "max": 320.3018617755545,
@@ -7159,11 +7163,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 12,
-    "wall_s": 8.093118536000475,
+    "wall_s": 7.897919360999367,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmphu9pf6f9/unknown1r69lte4.nl",
+     "/tmp/tmpkm1446jy/unknownm2xq1gj5.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -7178,7 +7182,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start2_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmphu9pf6f9/unknown1r69lte4.opt\""
+     "option_file_name=\"/tmp/tmpkm1446jy/unknownm2xq1gj5.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 298579.0878437907,
@@ -7312,6 +7316,7 @@
      "T_dew": 365.64226378043804,
      "used": 363.0363030460059
     },
+    "initial_stops": [],
     "audit_rejected_rows": []
    }
   },
@@ -7325,11 +7330,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 37,
-   "wall_s": 31.503334323000672,
+   "wall_s": 38.2203621080007,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpg0foo5j4/unknown4z_65pu5.nl",
+    "/tmp/tmp2xy11xfx/unknownaxszibk2.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -7344,7 +7349,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start3_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpg0foo5j4/unknown4z_65pu5.opt\""
+    "option_file_name=\"/tmp/tmp2xy11xfx/unknownaxszibk2.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282296423,
@@ -8390,7 +8395,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 163475.70655185546,
+    "state_jacobian_condition_1norm": 139232.77957595215,
     "singular_values": {
      "min": 0.005645598558380895,
      "max": 320.30186177554964,
@@ -8506,11 +8511,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 15,
-    "wall_s": 11.600790898999549,
+    "wall_s": 11.58446076799919,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpoexn33mv/unknownkdzqlyrn.nl",
+     "/tmp/tmpdhbkzeae/unknown9jj5pcml.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -8525,7 +8530,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start3_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpoexn33mv/unknownkdzqlyrn.opt\""
+     "option_file_name=\"/tmp/tmpdhbkzeae/unknown9jj5pcml.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 555767.5087065804,
@@ -8662,6 +8667,7 @@
      "T_dew": 366.3193784354017,
      "used": 364.09757482522355
     },
+    "initial_stops": [],
     "audit_rejected_rows": [
      {
       "block": "fs.F102.control_volume.properties_out[0.0]",
@@ -8754,11 +8760,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 62,
-   "wall_s": 62.17760196400013,
+   "wall_s": 66.4314337199994,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp480khi7w/unknownf0nvtaps.nl",
+    "/tmp/tmpybdb4hx3/unknownqx_8gm26.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -8773,7 +8779,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start1_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp480khi7w/unknownf0nvtaps.opt\""
+    "option_file_name=\"/tmp/tmpybdb4hx3/unknownqx_8gm26.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282482507,
@@ -9819,7 +9825,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 123874.96642479674,
+    "state_jacobian_condition_1norm": 124990.95839716568,
     "singular_values": {
      "min": 0.005645598558381668,
      "max": 320.30186177555686,
@@ -9935,11 +9941,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 11,
-    "wall_s": 9.515888570000243,
+    "wall_s": 10.761276858000201,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpgnqcmzn1/unknownf7nq2yal.nl",
+     "/tmp/tmpdmlc6jfh/unknown35naauep.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -9954,7 +9960,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start1_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpgnqcmzn1/unknownf7nq2yal.opt\""
+     "option_file_name=\"/tmp/tmpdmlc6jfh/unknown35naauep.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 347525.61353387294,
@@ -10088,6 +10094,7 @@
      "T_dew": 365.99117658211685,
      "used": 363.4548050767782
     },
+    "initial_stops": [],
     "audit_rejected_rows": []
    }
   },
@@ -10101,11 +10108,11 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 18,
-   "wall_s": 21.603111385000375,
+   "wall_s": 21.078457337000145,
    "exit": "Optimal Solution Found.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpusydgj3m/unknownq2ns_yk2.nl",
+    "/tmp/tmp6r51rtgr/unknowndqwxjezy.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -10120,7 +10127,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start2_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpusydgj3m/unknownq2ns_yk2.opt\""
+    "option_file_name=\"/tmp/tmp6r51rtgr/unknowndqwxjezy.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.02839285985,
@@ -11282,11 +11289,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 9,
-    "wall_s": 6.111626481000712,
+    "wall_s": 6.003998325000794,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpy_9hof1z/unknownger2l5dp.nl",
+     "/tmp/tmpl6s2416c/unknown6s6k78df.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -11301,7 +11308,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start2_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpy_9hof1z/unknownger2l5dp.opt\""
+     "option_file_name=\"/tmp/tmpl6s2416c/unknown6s6k78df.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 298579.08692044526,
@@ -11435,6 +11442,7 @@
      "T_dew": 365.64226378022437,
      "used": 363.03630304579167
     },
+    "initial_stops": [],
     "audit_rejected_rows": []
    }
   },
@@ -11448,11 +11456,11 @@
    ],
    "termination": "iterationLimit",
    "iterations": 400,
-   "wall_s": 1108.2441450859988,
+   "wall_s": 1251.106662364,
    "exit": "Maximum Number of Iterations Exceeded.",
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpj1wtkiqc/unknownusa7hja3.nl",
+    "/tmp/tmpc7ca7tq_/unknownyneqweu9.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -11467,7 +11475,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start3_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpj1wtkiqc/unknownusa7hja3.opt\""
+    "option_file_name=\"/tmp/tmpc7ca7tq_/unknownyneqweu9.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 301266.5655855387,
@@ -11615,8 +11623,7 @@
    ],
    "gate": [
     "termination",
-    "A1",
-    "M7"
+    "A1"
    ],
    "kkt": {
     "norms": {
@@ -12454,7 +12461,7 @@
     ],
     "counted_active": 0,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 140787.80925907704,
+    "state_jacobian_condition_1norm": 165170.92318569223,
     "singular_values": {
      "min": 0.005825565369986349,
      "max": 323.9508698140302,
@@ -12587,11 +12594,11 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 15,
-    "wall_s": 11.40551981399949,
+    "wall_s": 11.31857600100011,
     "exit": "Optimal Solution Found.",
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmp1urdzybt/unknownjy592g4l.nl",
+     "/tmp/tmpm0o2ivap/unknownr8eelnuj.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -12606,7 +12613,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start3_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmp1urdzybt/unknownjy592g4l.opt\""
+     "option_file_name=\"/tmp/tmpm0o2ivap/unknownr8eelnuj.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 555767.5087066008,
@@ -12743,6 +12750,7 @@
      "T_dew": 366.31938934307846,
      "used": 364.09757707156143
     },
+    "initial_stops": [],
     "audit_rejected_rows": [
      {
       "block": "fs.F102.control_volume.properties_out[0.0]",
@@ -12928,7 +12936,7 @@
   "simulation": {
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 6,
-   "wall_s": 0.03406159699989075,
+   "wall_s": 0.0387949550004123,
    "objective_USD_per_yr": 419008.2803967104,
    "decisions": [
     600,
@@ -12961,7 +12969,7 @@
    "start_square_solve": "convergenceCriteriaSatisfied",
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 22,
-   "wall_s": 0.06144406700059335,
+   "wall_s": 0.07026789399969857,
    "objective_USD_per_yr": 312674.2455516808,
    "decisions": [
     500.0000000000027,
@@ -12985,5 +12993,5 @@
    }
   }
  },
- "wall_s": 1789.3957050580002
+ "wall_s": 1955.9310156049996
 }

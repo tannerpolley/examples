@@ -13,7 +13,7 @@ List of user-set options:
                                 max_iter = 400                   yes
                              mu_strategy = adaptive              yes
                       nlp_scaling_method = user-scaling          yes
-                        option_file_name = /tmp/tmp4na7jaxx/unknownkikxzq73.opt  yes
+                        option_file_name = /tmp/tmp5ee9nir7/unknownt3ujp05c.opt  yes
                              output_file = /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start2_square.ipopt  yes
                       print_user_options = yes                   yes
                                      tol = 1e-08                 yes
@@ -79,7 +79,7 @@ Number of inequality constraint evaluations          = 0
 Number of equality constraint Jacobian evaluations   = 7
 Number of inequality constraint Jacobian evaluations = 0
 Number of Lagrangian Hessian evaluations             = 6
-Total CPU secs in IPOPT (w/o function evaluations)   =      0.008
-Total CPU secs in NLP function evaluations           =      4.250
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.007
+Total CPU secs in NLP function evaluations           =      4.164
 
 EXIT: Optimal Solution Found.
