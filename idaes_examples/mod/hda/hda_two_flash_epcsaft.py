@@ -141,12 +141,14 @@ def _epcsaft_numerics(m):
     """Scaling, absent-phase flows and bounds for the interior-point solve with ePC-SAFT."""
     fs = m.fs
     set_unit_scaling(m)
-    # Ideal-separation outlets carry the absent phase as an exact zero; the F101 liquid then has
-    # exactly zero hydrogen and methane, at their lower bound 0 (not fixed: their defining rows stay).
+    # Ideal-separation outlets carry the absent phase as an exact zero, so the F101 liquid's overall
+    # hydrogen and methane fractions are exactly 0: they are fixed and their defining rows dropped
+    # (z_j F = y_j F_Vap with F_Vap = 0; left free, the row and the active bound make them degenerate).
     fs.F101.split.eps_flow.set_value(0.0)
     fs.F102.split.eps_flow.set_value(0.0)
     for c in NONCONDENSABLE:
-        fs.to_aromatics.properties_in[0].mole_frac_comp[c].setlb(0.0)
+        fs.to_aromatics.properties_in[0].mole_frac_comp[c].fix(0.0, skip_validation=True)  # at its 1e-20 floor
+        fs.to_aromatics.properties_in[0].mole_frac_comp_eq[c].deactivate()
     # bound_relax_factor = 0 keeps every composition weight inside the callback domain. Phase flows
     # and fractions are never callback inputs; they get Ipopt's default 1e-8 lower-bound relaxation
     # explicitly, because SmoothVLE leaves superheated streams a liquid of O(eps_2^2 / (T - T_dew))
@@ -243,7 +245,7 @@ def initialize_from(m, ref):
         propagate_state(arc=getattr(m.fs, arc + "a"))
         propagate_state(arc=getattr(m.fs, arc + "b"), direction="backward")
     for sb in (b for b in m.component_data_objects(Block, descend_into=True) if isinstance(b, StateBlockData)):
-        for v, c in [*((sb.mole_frac_comp[j], sb.mole_frac_comp_eq[j]) for j in sb.component_list),
+        for v, c in [*((sb.mole_frac_comp[j], sb.mole_frac_comp_eq[j]) for j in sb.component_list if not sb.mole_frac_comp[j].fixed),
                      *((sb.phase_frac[p], sb.phase_fraction_constraint[p]) for p in sb.phase_list)]:
             calculate_variable_from_constraint(v, c)
     _init_Tbub(m.fs.F102.control_volume.properties_out[0], pyunits.K)  # F102's bubble operation: IDAES's seed
