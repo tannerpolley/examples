@@ -1,0 +1,471 @@
+{
+ "schema": "epcsaft.parameters",
+ "schema_version": 1,
+ "model_families": [
+  {
+   "family_id": "model/association",
+   "kind": "association",
+   "choice": "none",
+   "provenance": {
+    "source_id": "gross-sadowski-2001",
+    "locator": "Table 2, methane row, M_i and T range columns",
+    "domain_id": "methane-fit-range"
+   }
+  },
+  {
+   "family_id": "model/base",
+   "kind": "base",
+   "choice": "pc-saft",
+   "provenance": {
+    "source_id": "gross-sadowski-2001",
+    "locator": "Table 2, methane row, m_i^seg and T range columns",
+    "domain_id": "methane-fit-range"
+   }
+  },
+  {
+   "family_id": "model/electrolyte",
+   "kind": "electrolyte",
+   "choice": "none",
+   "provenance": {
+    "source_id": "gross-sadowski-2001",
+    "locator": "Table 2, methane row, M_i and T range columns",
+    "domain_id": "methane-fit-range"
+   }
+  },
+  {
+   "family_id": "model/relative_permittivity",
+   "kind": "permittivity",
+   "choice": "none",
+   "provenance": {
+    "source_id": "gross-sadowski-2001",
+    "locator": "Neutral PC-SAFT formulation without electrolyte relative permittivity",
+    "domain_id": "gross-formulation-domain"
+   }
+  }
+ ],
+ "correlations": [],
+ "topology": {
+  "presets": [],
+  "sites": [],
+  "edges": []
+ },
+ "document_id": "hda-pc-saft",
+ "document_version": 1,
+ "purpose": "external-document",
+ "sources": [
+  {
+   "source_id": "hda-analysis",
+   "citation": "#73 analysis document",
+   "use_basis": "analysis"
+  }
+ ],
+ "domains": [
+  {
+   "domain_id": "hda",
+   "kind": "analysis"
+  }
+ ],
+ "model_coefficients": [],
+ "components": [
+  {
+   "component_id": "hydrogen",
+   "aliases": [],
+   "name": "hydrogen",
+   "fixed": {
+    "molar_mass": {
+     "value": {
+      "magnitude": 0.00201588,
+      "unit": "kg / mol"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 HDA parameter set",
+      "domain_id": "hda"
+     }
+    },
+    "charge_number": {
+     "identity": "component/hydrogen/charge_number",
+     "value": {
+      "magnitude": 0,
+      "unit": "elementary-charge"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 HDA parameter set",
+      "domain_id": "hda"
+     }
+    }
+   },
+   "coefficients": [
+    {
+     "identity": "component/hydrogen/segment_count",
+     "family": "segment_count",
+     "value": {
+      "magnitude": 1.0,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 HDA parameter set",
+      "domain_id": "hda"
+     }
+    },
+    {
+     "identity": "component/hydrogen/segment_diameter",
+     "family": "segment_diameter",
+     "value": {
+      "magnitude": 2.986,
+      "unit": "angstrom"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 HDA parameter set",
+      "domain_id": "hda"
+     }
+    },
+    {
+     "identity": "component/hydrogen/dispersion_energy_over_k",
+     "family": "dispersion_energy_over_k",
+     "value": {
+      "magnitude": 19.2775,
+      "unit": "kelvin"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 HDA parameter set",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  },
+  {
+   "component_id": "methane",
+   "aliases": [],
+   "fixed": {
+    "molar_mass": {
+     "value": {
+      "magnitude": 0.016043,
+      "unit": "kg / mol"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, methane row, M_i and T range columns",
+      "domain_id": "methane-fit-range"
+     }
+    },
+    "charge_number": {
+     "identity": "component/methane/charge_number",
+     "value": {
+      "magnitude": 0,
+      "unit": "elementary-charge"
+     },
+     "provenance": {
+      "source_id": "explicit-neutral-model",
+      "locator": "Explicit zero charge for the same neutral species in the predecessor non-electrolyte parameterization; not a published fitted coordinate.",
+      "domain_id": "methane-fit-range"
+     }
+    }
+   },
+   "coefficients": [
+    {
+     "identity": "component/methane/dispersion_energy_over_k",
+     "family": "dispersion_energy_over_k",
+     "value": {
+      "magnitude": 150.03,
+      "unit": "kelvin"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, methane row, epsilon_i/k and T range columns",
+      "domain_id": "methane-fit-range"
+     }
+    },
+    {
+     "identity": "component/methane/segment_count",
+     "family": "segment_count",
+     "value": {
+      "magnitude": 1.0,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, methane row, m_i^seg and T range columns",
+      "domain_id": "methane-fit-range"
+     }
+    },
+    {
+     "identity": "component/methane/segment_diameter",
+     "family": "segment_diameter",
+     "value": {
+      "magnitude": 3.7039,
+      "unit": "angstrom"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, methane row, sigma_i and T range columns",
+      "domain_id": "methane-fit-range"
+     }
+    }
+   ],
+   "name": "methane"
+  },
+  {
+   "component_id": "benzene",
+   "aliases": [],
+   "fixed": {
+    "molar_mass": {
+     "value": {
+      "magnitude": 0.078114,
+      "unit": "kg / mol"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, benzene row, M_i and T range columns",
+      "domain_id": "benzene-fit-range"
+     }
+    },
+    "charge_number": {
+     "identity": "component/benzene/charge_number",
+     "value": {
+      "magnitude": 0,
+      "unit": "elementary-charge"
+     },
+     "provenance": {
+      "source_id": "explicit-neutral-model",
+      "locator": "Explicit zero charge for the same neutral species in the predecessor non-electrolyte parameterization; not a published fitted coordinate.",
+      "domain_id": "benzene-fit-range"
+     }
+    }
+   },
+   "coefficients": [
+    {
+     "identity": "component/benzene/dispersion_energy_over_k",
+     "family": "dispersion_energy_over_k",
+     "value": {
+      "magnitude": 287.35,
+      "unit": "kelvin"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, benzene row, epsilon_i/k and T range columns",
+      "domain_id": "benzene-fit-range"
+     }
+    },
+    {
+     "identity": "component/benzene/segment_count",
+     "family": "segment_count",
+     "value": {
+      "magnitude": 2.4653,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, benzene row, m_i^seg and T range columns",
+      "domain_id": "benzene-fit-range"
+     }
+    },
+    {
+     "identity": "component/benzene/segment_diameter",
+     "family": "segment_diameter",
+     "value": {
+      "magnitude": 3.6478,
+      "unit": "angstrom"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, benzene row, sigma_i and T range columns",
+      "domain_id": "benzene-fit-range"
+     }
+    }
+   ],
+   "name": "benzene"
+  },
+  {
+   "component_id": "toluene",
+   "aliases": [],
+   "fixed": {
+    "molar_mass": {
+     "value": {
+      "magnitude": 0.092141,
+      "unit": "kg / mol"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, toluene row, M_i and T range columns",
+      "domain_id": "toluene-fit-range"
+     }
+    },
+    "charge_number": {
+     "identity": "component/toluene/charge_number",
+     "value": {
+      "magnitude": 0,
+      "unit": "elementary-charge"
+     },
+     "provenance": {
+      "source_id": "explicit-neutral-model",
+      "locator": "Explicit zero charge for the same neutral species in the predecessor non-electrolyte parameterization; not a published fitted coordinate.",
+      "domain_id": "toluene-fit-range"
+     }
+    }
+   },
+   "coefficients": [
+    {
+     "identity": "component/toluene/dispersion_energy_over_k",
+     "family": "dispersion_energy_over_k",
+     "value": {
+      "magnitude": 285.69,
+      "unit": "kelvin"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, toluene row, epsilon_i/k and T range columns",
+      "domain_id": "toluene-fit-range"
+     }
+    },
+    {
+     "identity": "component/toluene/segment_count",
+     "family": "segment_count",
+     "value": {
+      "magnitude": 2.8149,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, toluene row, m_i^seg and T range columns",
+      "domain_id": "toluene-fit-range"
+     }
+    },
+    {
+     "identity": "component/toluene/segment_diameter",
+     "family": "segment_diameter",
+     "value": {
+      "magnitude": 3.7169,
+      "unit": "angstrom"
+     },
+     "provenance": {
+      "source_id": "gross-sadowski-2001",
+      "locator": "Table 2, toluene row, sigma_i and T range columns",
+      "domain_id": "toluene-fit-range"
+     }
+    }
+   ],
+   "name": "toluene"
+  }
+ ],
+ "pairs": [
+  {
+   "component_id_a": "hydrogen",
+   "component_id_b": "methane",
+   "coefficients": [
+    {
+     "identity": "pair/hydrogen/methane/k_ij",
+     "family": "k_ij",
+     "value": {
+      "magnitude": -0.176087738,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 hydrogen-pair fit",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  },
+  {
+   "component_id_a": "hydrogen",
+   "component_id_b": "benzene",
+   "coefficients": [
+    {
+     "identity": "pair/hydrogen/benzene/k_ij",
+     "family": "k_ij",
+     "value": {
+      "magnitude": -0.0525723788,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "#73 hydrogen-pair fit",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  },
+  {
+   "component_id_a": "hydrogen",
+   "component_id_b": "toluene",
+   "coefficients": [
+    {
+     "identity": "pair/hydrogen/toluene/k_ij",
+     "family": "k_ij",
+     "value": {
+      "magnitude": -0.047,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "Saajanlehto 2014 Table 6",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  },
+  {
+   "component_id_a": "methane",
+   "component_id_b": "benzene",
+   "coefficients": [
+    {
+     "identity": "pair/methane/benzene/k_ij",
+     "family": "k_ij",
+     "value": {
+      "magnitude": 0.037,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "gross-sadowski-2001 Table 4",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  },
+  {
+   "component_id_a": "methane",
+   "component_id_b": "toluene",
+   "coefficients": [
+    {
+     "identity": "pair/methane/toluene/k_ij",
+     "family": "k_ij",
+     "value": {
+      "magnitude": 0.052,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "gross-sadowski-2001 Table 4",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  },
+  {
+   "component_id_a": "benzene",
+   "component_id_b": "toluene",
+   "coefficients": [
+    {
+     "identity": "pair/benzene/toluene/k_ij",
+     "family": "k_ij",
+     "value": {
+      "magnitude": -0.003,
+      "unit": "dimensionless"
+     },
+     "provenance": {
+      "source_id": "hda-analysis",
+      "locator": "Yu 2026 Table 2",
+      "domain_id": "hda"
+     }
+    }
+   ]
+  }
+ ]
+}

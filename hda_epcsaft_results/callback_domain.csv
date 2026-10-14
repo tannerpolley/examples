@@ -1,0 +1,16 @@
+T_K,observable,value
+150.0,molar_density,279.9439299842657
+150.0,enthalpy,nan
+150.0,log_fugacity_coefficient,0.003966926813733611
+199.9,molar_density,209.99841866112598
+199.9,enthalpy,nan
+199.9,log_fugacity_coefficient,0.003467298188850152
+200.0,molar_density,209.89343008443743
+200.0,enthalpy,nan
+200.0,log_fugacity_coefficient,0.0034662862598423007
+200.1,molar_density,209.7885467459491
+200.1,enthalpy,-7468.087623137972
+200.1,log_fugacity_coefficient,0.0034652745749900616
+250.0,molar_density,167.93786351146426
+250.0,enthalpy,-6053.242435224449
+250.0,log_fugacity_coefficient,0.003000878798331373

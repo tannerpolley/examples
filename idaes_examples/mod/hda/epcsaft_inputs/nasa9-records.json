@@ -1,0 +1,216 @@
+{
+ "schema": "nasa-glenn-nasa9-records",
+ "schema_version": 1,
+ "source_id": "mcbride-zehe-gordon-2002",
+ "gas_constant_J_per_mol_K": 8.31451,
+ "standard_pressure_Pa": 100000.0,
+ "coefficient_order": [
+  "a1",
+  "a2",
+  "a3",
+  "a4",
+  "a5",
+  "a6",
+  "a7",
+  "b1",
+  "b2"
+ ],
+ "forms": {
+  "cp_over_R": "a1*T^-2 + a2*T^-1 + a3 + a4*T + a5*T^2 + a6*T^3 + a7*T^4",
+  "h_over_RT": "-a1*T^-2 + a2*ln(T)/T + a3 + a4*T/2 + a5*T^2/3 + a6*T^3/4 + a7*T^4/5 + b1/T",
+  "s_over_R": "-a1*T^-2/2 - a2*T^-1 + a3*ln(T) + a4*T + a5*T^2/2 + a6*T^3/3 + a7*T^4/4 + b2",
+  "temperature_unit": "kelvin"
+ },
+ "interval_note": "Intervals are verbatim from NASA/TP-2002-211556 Appendix D; adjacent intervals share their boundary and are not merged or smoothed. The CEA thermo.inp distribution revised 2021-09-09 raised the benzene and toluene first-interval lower bound to 300 K without changing any coefficient; that bound is kept as cea_2021_distribution_lower_K.",
+ "species": [
+  {
+   "species_id": "hydrogen",
+   "nasa_name": "H2",
+   "phase": "gas",
+   "reference_date_code": "tpis78",
+   "source_comment": "Ref-Elm. Gurvich,1978 pt1 p103 pt2 p31.",
+   "locator": "NASA/TP-2002-211556 Appendix D, printed p. 130 (PDF p. 138), H2 gas record",
+   "molar_mass_g_per_mol": 2.01588,
+   "formation_enthalpy_298_15_J_per_mol": 0.0,
+   "h298_15_minus_h0_J_per_mol": 8468.102,
+   "intervals": [
+    {
+     "lower_K": 200.0,
+     "upper_K": 1000.0,
+     "coefficients": [
+      40783.2321,
+      -800.918604,
+      8.21470201,
+      -0.01269714457,
+      1.753605076e-05,
+      -1.20286027e-08,
+      3.36809349e-12,
+      2682.484665,
+      -30.43788844
+     ]
+    },
+    {
+     "lower_K": 1000.0,
+     "upper_K": 6000.0,
+     "coefficients": [
+      560812.801,
+      -837.150474,
+      2.975364532,
+      0.001252249124,
+      -3.74071619e-07,
+      5.9366252e-11,
+      -3.6069941e-15,
+      5339.82441,
+      -2.202774769
+     ]
+    },
+    {
+     "lower_K": 6000.0,
+     "upper_K": 20000.0,
+     "coefficients": [
+      496688412.0,
+      -314754.7149,
+      79.8412188,
+      -0.00841478921,
+      4.75324835e-07,
+      -1.371873492e-11,
+      1.605461756e-16,
+      2488433.516,
+      -669.572811
+     ]
+    }
+   ]
+  },
+  {
+   "species_id": "methane",
+   "nasa_name": "CH4",
+   "phase": "gas",
+   "reference_date_code": "g 8/99",
+   "source_comment": "Gurvich,1991 pt1 p44 pt2 p36.",
+   "locator": "NASA/TP-2002-211556 Appendix D, printed p. 83 (PDF p. 91), CH4 gas record",
+   "molar_mass_g_per_mol": 16.04246,
+   "formation_enthalpy_298_15_J_per_mol": -74600.0,
+   "h298_15_minus_h0_J_per_mol": 10016.202,
+   "intervals": [
+    {
+     "lower_K": 200.0,
+     "upper_K": 1000.0,
+     "coefficients": [
+      -176685.0998,
+      2786.18102,
+      -12.0257785,
+      0.0391761929,
+      -3.61905443e-05,
+      2.026853043e-08,
+      -4.97670549e-12,
+      -23313.1436,
+      89.0432275
+     ]
+    },
+    {
+     "lower_K": 1000.0,
+     "upper_K": 6000.0,
+     "coefficients": [
+      3730042.76,
+      -13835.01485,
+      20.49107091,
+      -0.001961974759,
+      4.72731304e-07,
+      -3.72881469e-11,
+      1.623737207e-15,
+      75320.6691,
+      -121.9124889
+     ]
+    }
+   ]
+  },
+  {
+   "species_id": "benzene",
+   "nasa_name": "C6H6",
+   "phase": "gas",
+   "reference_date_code": "g 8/00",
+   "source_comment": "TRC(10/86)w3200. Pliva,1982,1983,1984. Shimanouchi,1972.",
+   "locator": "NASA/TP-2002-211556 Appendix D, printed p. 100 (PDF p. 108), C6H6 gas record",
+   "molar_mass_g_per_mol": 78.11184,
+   "formation_enthalpy_298_15_J_per_mol": 82880.0,
+   "h298_15_minus_h0_J_per_mol": 14195.691,
+   "intervals": [
+    {
+     "lower_K": 200.0,
+     "upper_K": 1000.0,
+     "coefficients": [
+      -167734.0902,
+      4404.50004,
+      -37.1737791,
+      0.1640509559,
+      -0.0002020812374,
+      1.307915264e-07,
+      -3.4442841e-11,
+      -10354.55401,
+      216.9853345
+     ],
+     "cea_2021_distribution_lower_K": 300.0
+    },
+    {
+     "lower_K": 1000.0,
+     "upper_K": 6000.0,
+     "coefficients": [
+      4538575.72,
+      -22605.02547,
+      46.940073,
+      -0.00420667683,
+      7.90799433e-07,
+      -7.9683021e-11,
+      3.32821208e-15,
+      139146.4686,
+      -286.8751333
+     ]
+    }
+   ]
+  },
+  {
+   "species_id": "toluene",
+   "nasa_name": "C7H8",
+   "phase": "gas",
+   "reference_date_code": "g 1/93",
+   "source_comment": "Hf:TRC(4/98) w3510. Hitchcock,1975. Rudolph,1967.",
+   "locator": "NASA/TP-2002-211556 Appendix D, printed p. 101 (PDF p. 109), C7H8 gas record",
+   "molar_mass_g_per_mol": 92.13842,
+   "formation_enthalpy_298_15_J_per_mol": 50170.0,
+   "h298_15_minus_h0_J_per_mol": 17940.345,
+   "intervals": [
+    {
+     "lower_K": 200.0,
+     "upper_K": 1000.0,
+     "coefficients": [
+      -287796.222,
+      6133.94152,
+      -45.7470676,
+      0.1936895724,
+      -0.0002304305304,
+      1.459301178e-07,
+      -3.7907961e-11,
+      -23084.02499,
+      269.3915042
+     ],
+     "cea_2021_distribution_lower_K": 300.0
+    },
+    {
+     "lower_K": 1000.0,
+     "upper_K": 6000.0,
+     "coefficients": [
+      6184538.35,
+      -29902.84056,
+      59.8200597,
+      -0.00569698396,
+      1.080748416e-06,
+      -1.098702235e-10,
+      4.62474022e-15,
+      178204.7857,
+      -369.808225
+     ]
+    }
+   ]
+  }
+ ]
+}
