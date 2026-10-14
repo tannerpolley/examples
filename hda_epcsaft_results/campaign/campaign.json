@@ -15,7 +15,7 @@
   ],
   "linear_solver": "ma57",
   "run_kind": "acceptance",
-  "downstream_commit": "f0f5ded8c61c84d4cc9b2e4a1df59398aa5e70f6",
+  "downstream_commit": "f0a25199b336aca9b6fd688e1831cbf69c0f381d",
   "downstream_source_clean": true
  },
  "factors_done": [
@@ -35,11 +35,12 @@
    "factor": 1.0,
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 5,
-   "wall_s": 4.781360884999231,
+   "wall_s": 3.6798935849999452,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 1.6486811915683575e-14,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp5e731ub7/unknowntq98b174.nl",
+    "/tmp/tmpkj3_aqcu/unknownmjvqlk5o.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -54,7 +55,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_simulation.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp5e731ub7/unknowntq98b174.opt\""
+    "option_file_name=\"/tmp/tmpkj3_aqcu/unknownmjvqlk5o.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 405416.87159496854,
@@ -190,11 +191,12 @@
    "factor": 0.1,
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 5,
-   "wall_s": 3.633002602000488,
+   "wall_s": 5.0558721940001305,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 2.9976021664879227e-14,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpi4bxbwz5/unknownaospqkwu.nl",
+    "/tmp/tmps1mnmvmk/unknownh4wp0cpr.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -209,7 +211,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_simulation.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpi4bxbwz5/unknownaospqkwu.opt\""
+    "option_file_name=\"/tmp/tmps1mnmvmk/unknownh4wp0cpr.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 405416.7754611214,
@@ -345,11 +347,12 @@
    "factor": 0.01,
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 5,
-   "wall_s": 4.2270234289990185,
+   "wall_s": 3.5649079049999273,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 2.4424906541753444e-14,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpbmpikot3/unknown7y73c9tq.nl",
+    "/tmp/tmptwvarc7p/unknowncv1ioqip.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -364,7 +367,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_simulation.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpbmpikot3/unknown7y73c9tq.opt\""
+    "option_file_name=\"/tmp/tmptwvarc7p/unknowncv1ioqip.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 405416.7744997838,
@@ -508,11 +511,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 14,
-   "wall_s": 11.864842921999298,
+   "wall_s": 10.4816076850002,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.597744490160039e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpzkkiv99e/unknown4zjygvy2.nl",
+    "/tmp/tmpqvd5bmrs/unknown9unbx8_z.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -527,7 +531,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start1_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpzkkiv99e/unknown4zjygvy2.opt\""
+    "option_file_name=\"/tmp/tmpqvd5bmrs/unknown9unbx8_z.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0263684722,
@@ -1689,11 +1693,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 11,
-    "wall_s": 10.915562828000475,
+    "wall_s": 9.729336179000029,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 1.7362333792902973e-11,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpn3ay1ngz/unknownhhkba78q.nl",
+     "/tmp/tmp12iw3dpb/unknownnxpzts8d.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -1708,7 +1713,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start1_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpn3ay1ngz/unknownhhkba78q.opt\""
+     "option_file_name=\"/tmp/tmp12iw3dpb/unknownnxpzts8d.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 347525.7033149204,
@@ -1856,11 +1861,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 11,
-   "wall_s": 8.28241012899889,
+   "wall_s": 8.944824596999979,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.434541705540141e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpntg00lvj/unknown3msu0cto.nl",
+    "/tmp/tmp67l_9m16/unknownqom21bb5.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -1875,7 +1881,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start2_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpntg00lvj/unknown3msu0cto.opt\""
+    "option_file_name=\"/tmp/tmp67l_9m16/unknownqom21bb5.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.02636847115,
@@ -3037,11 +3043,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 9,
-    "wall_s": 6.7110658590008825,
+    "wall_s": 6.184616508999852,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 5.490052856771399e-13,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmp221bcbp2/unknownfdoh_9ge.nl",
+     "/tmp/tmpkfvr9szp/unknown_eb7u029.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -3056,7 +3063,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start2_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmp221bcbp2/unknownfdoh_9ge.opt\""
+     "option_file_name=\"/tmp/tmpkfvr9szp/unknown_eb7u029.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 298579.1799633017,
@@ -3204,11 +3211,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 85,
-   "wall_s": 143.64713270899847,
+   "wall_s": 153.3807283189999,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.535572000781031e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpngqszscy/unknown2civd9qe.nl",
+    "/tmp/tmprw55o4a5/unknown402mhj9t.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -3223,7 +3231,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start3_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpngqszscy/unknown2civd9qe.opt\""
+    "option_file_name=\"/tmp/tmprw55o4a5/unknown402mhj9t.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0263684698,
@@ -4269,7 +4277,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 124990.95853070369,
+    "state_jacobian_condition_1norm": 123874.96520194346,
     "singular_values": {
      "min": 0.0056455985582929595,
      "max": 320.30186177555214,
@@ -4385,11 +4393,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 16,
-    "wall_s": 12.011381255000742,
+    "wall_s": 12.206587854999952,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 2.143829558320931e-11,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmp0utatf7f/unknownk0k4nb_l.nl",
+     "/tmp/tmpp8sqqn0p/unknownilm4yp3m.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -4404,7 +4413,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/1_start3_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmp0utatf7f/unknownk0k4nb_l.opt\""
+     "option_file_name=\"/tmp/tmpp8sqqn0p/unknownilm4yp3m.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 555767.5087058228,
@@ -4580,7 +4589,8 @@
       "pressure_error_Pa": 4.449975676834583e-08,
       "dP_drho_min": 2866.46817151407,
       "accepted": false,
-      "reason": "fractions,residual"
+      "reason": "fractions,residual",
+      "primal_infeasibility": 2.143829558320931e-11
      },
      {
       "block": "fs.F102.control_volume.properties_out[0.0]",
@@ -4619,7 +4629,8 @@
       "pressure_error_Pa": 1.0416260920464993e-07,
       "dP_drho_min": 2833.6009861614134,
       "accepted": false,
-      "reason": "fractions,residual"
+      "reason": "fractions,residual",
+      "primal_infeasibility": 2.143829558320931e-11
      }
     ]
    }
@@ -4634,11 +4645,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 23,
-   "wall_s": 26.671875948999514,
+   "wall_s": 30.22398593999992,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 2.1968538099770285e-14,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp8y_2ux74/unknownefulx2wo.nl",
+    "/tmp/tmpb3q_lbn_/unknownh63mx8_n.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -4653,7 +4665,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start1_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp8y_2ux74/unknownefulx2wo.opt\""
+    "option_file_name=\"/tmp/tmpb3q_lbn_/unknownh63mx8_n.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282298034,
@@ -5699,7 +5711,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 163475.70655293387,
+    "state_jacobian_condition_1norm": 139232.7795769406,
     "singular_values": {
      "min": 0.005645598558381686,
      "max": 320.3018617778729,
@@ -5815,11 +5827,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 11,
-    "wall_s": 9.857238061000317,
+    "wall_s": 13.831963289999976,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 1.781497172004265e-11,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpn8plwiv0/unknownna50tvj5.nl",
+     "/tmp/tmp_ic90oiz/unknownmmlkgska.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -5834,7 +5847,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start1_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpn8plwiv0/unknownna50tvj5.opt\""
+     "option_file_name=\"/tmp/tmp_ic90oiz/unknownmmlkgska.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 347525.6143702243,
@@ -5982,11 +5995,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 72,
-   "wall_s": 102.09233452300032,
+   "wall_s": 103.47088558400014,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.525579993559404e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpltx1todw/unknown9h2pdjgm.nl",
+    "/tmp/tmp3ybkkffi/unknown90inoax2.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -6001,7 +6015,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start2_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpltx1todw/unknown9h2pdjgm.opt\""
+    "option_file_name=\"/tmp/tmp3ybkkffi/unknown90inoax2.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282296265,
@@ -7163,11 +7177,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 12,
-    "wall_s": 7.897919360999367,
+    "wall_s": 8.07450826399986,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 5.381251000358134e-13,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpkm1446jy/unknownm2xq1gj5.nl",
+     "/tmp/tmpc3nb3gm0/unknownw5yitel8.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -7182,7 +7197,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start2_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpkm1446jy/unknownm2xq1gj5.opt\""
+     "option_file_name=\"/tmp/tmpc3nb3gm0/unknownw5yitel8.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 298579.0878437907,
@@ -7330,11 +7345,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 37,
-   "wall_s": 38.2203621080007,
+   "wall_s": 32.08236311099995,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.53335155473178e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp2xy11xfx/unknownaxszibk2.nl",
+    "/tmp/tmpqderaabh/unknown_bfjpjq3.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -7349,7 +7365,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start3_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp2xy11xfx/unknownaxszibk2.opt\""
+    "option_file_name=\"/tmp/tmpqderaabh/unknown_bfjpjq3.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282296423,
@@ -8395,7 +8411,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 139232.77957595215,
+    "state_jacobian_condition_1norm": 163475.70655185546,
     "singular_values": {
      "min": 0.005645598558380895,
      "max": 320.30186177554964,
@@ -8511,11 +8527,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 15,
-    "wall_s": 11.58446076799919,
+    "wall_s": 21.34807682299993,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 1.6966428262321642e-12,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpdhbkzeae/unknown9jj5pcml.nl",
+     "/tmp/tmpp88yu0uu/unknownuzspayah.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -8530,7 +8547,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.1_start3_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpdhbkzeae/unknown9jj5pcml.opt\""
+     "option_file_name=\"/tmp/tmpp88yu0uu/unknownuzspayah.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 555767.5087065804,
@@ -8706,7 +8723,8 @@
       "pressure_error_Pa": 6.258778739720583e-08,
       "dP_drho_min": 2866.4700826273834,
       "accepted": false,
-      "reason": "fractions,residual"
+      "reason": "fractions,residual",
+      "primal_infeasibility": 1.6966428262321642e-12
      },
      {
       "block": "fs.F102.control_volume.properties_out[0.0]",
@@ -8745,7 +8763,8 @@
       "pressure_error_Pa": 4.2404280975461006e-08,
       "dP_drho_min": 2833.6130135170033,
       "accepted": false,
-      "reason": "fractions,residual"
+      "reason": "fractions,residual",
+      "primal_infeasibility": 1.6966428262321642e-12
      }
     ]
    }
@@ -8760,11 +8779,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 62,
-   "wall_s": 66.4314337199994,
+   "wall_s": 72.07482684699994,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.331290964250002e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpybdb4hx3/unknownqx_8gm26.nl",
+    "/tmp/tmpes56co5b/unknownyirm6cze.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -8779,7 +8799,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start1_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpybdb4hx3/unknownqx_8gm26.opt\""
+    "option_file_name=\"/tmp/tmpes56co5b/unknownyirm6cze.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.0282482507,
@@ -9825,7 +9845,7 @@
     ],
     "counted_active": 4,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 124990.95839716568,
+    "state_jacobian_condition_1norm": 123874.96642479674,
     "singular_values": {
      "min": 0.005645598558381668,
      "max": 320.30186177555686,
@@ -9941,11 +9961,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 11,
-    "wall_s": 10.761276858000201,
+    "wall_s": 9.83652429499989,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 1.7533585694451403e-10,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpdmlc6jfh/unknown35naauep.nl",
+     "/tmp/tmphyrbeq2q/unknowniqcm_czi.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -9960,7 +9981,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start1_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpdmlc6jfh/unknown35naauep.opt\""
+     "option_file_name=\"/tmp/tmphyrbeq2q/unknowniqcm_czi.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 347525.61353387294,
@@ -10108,11 +10129,12 @@
    ],
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 18,
-   "wall_s": 21.078457337000145,
+   "wall_s": 26.665644461000056,
    "exit": "Optimal Solution Found.",
+   "primal_infeasibility": 5.403455460850637e-13,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmp6r51rtgr/unknowndqwxjezy.nl",
+    "/tmp/tmprd5id0jq/unknownbt2a_mm5.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -10127,7 +10149,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start2_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmp6r51rtgr/unknowndqwxjezy.opt\""
+    "option_file_name=\"/tmp/tmprd5id0jq/unknownbt2a_mm5.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 300975.02839285985,
@@ -11289,11 +11311,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 9,
-    "wall_s": 6.003998325000794,
+    "wall_s": 6.710984495000048,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 5.627720511824919e-13,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpl6s2416c/unknown6s6k78df.nl",
+     "/tmp/tmpxtgzibex/unknownvt_627df.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -11308,7 +11331,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start2_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpl6s2416c/unknown6s6k78df.opt\""
+     "option_file_name=\"/tmp/tmpxtgzibex/unknownvt_627df.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 298579.08692044526,
@@ -11456,11 +11479,12 @@
    ],
    "termination": "iterationLimit",
    "iterations": 400,
-   "wall_s": 1251.106662364,
+   "wall_s": 1126.677959367,
    "exit": "Maximum Number of Iterations Exceeded.",
+   "primal_infeasibility": 5.041777342196241e-05,
    "command_line": [
     "/home/tnnrpolley21/.idaes/bin/ipopt",
-    "/tmp/tmpc7ca7tq_/unknownyneqweu9.nl",
+    "/tmp/tmpc5tsc09z/unknownq9fqz2da.nl",
     "-AMPL",
     "bound_relax_factor=0.0",
     "compl_inf_tol=1e-06",
@@ -11475,7 +11499,7 @@
     "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start3_optimization.ipopt\"",
     "print_user_options=\"yes\"",
     "tol=1e-08",
-    "option_file_name=\"/tmp/tmpc7ca7tq_/unknownyneqweu9.opt\""
+    "option_file_name=\"/tmp/tmpc5tsc09z/unknownq9fqz2da.opt\""
    ],
    "return_code": 0,
    "objective_USD_per_yr": 301266.5655855387,
@@ -12461,7 +12485,7 @@
     ],
     "counted_active": 0,
     "excluded": 30,
-    "state_jacobian_condition_1norm": 165170.92318569223,
+    "state_jacobian_condition_1norm": 125156.14494856092,
     "singular_values": {
      "min": 0.005825565369986349,
      "max": 323.9508698140302,
@@ -12594,11 +12618,12 @@
    "square": {
     "termination": "convergenceCriteriaSatisfied",
     "iterations": 15,
-    "wall_s": 11.31857600100011,
+    "wall_s": 12.335237167999821,
     "exit": "Optimal Solution Found.",
+    "primal_infeasibility": 1.6998624730035772e-12,
     "command_line": [
      "/home/tnnrpolley21/.idaes/bin/ipopt",
-     "/tmp/tmpm0o2ivap/unknownr8eelnuj.nl",
+     "/tmp/tmpkxovm33a/unknown9i_gxae9.nl",
      "-AMPL",
      "bound_relax_factor=0.0",
      "compl_inf_tol=1e-06",
@@ -12613,7 +12638,7 @@
      "output_file=\"/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/downstream/.worktrees/idaes-examples-hda-73/hda_epcsaft_results/campaign/ipopt/0.01_start3_square_inside.ipopt\"",
      "print_user_options=\"yes\"",
      "tol=1e-08",
-     "option_file_name=\"/tmp/tmpm0o2ivap/unknownr8eelnuj.opt\""
+     "option_file_name=\"/tmp/tmpkxovm33a/unknown9i_gxae9.opt\""
     ],
     "return_code": 0,
     "objective_USD_per_yr": 555767.5087066008,
@@ -12789,7 +12814,8 @@
       "pressure_error_Pa": 3.528548404574394e-07,
       "dP_drho_min": 2866.4701451296637,
       "accepted": false,
-      "reason": "fractions,residual"
+      "reason": "fractions,residual",
+      "primal_infeasibility": 1.6998624730035772e-12
      },
      {
       "block": "fs.F102.control_volume.properties_out[0.0]",
@@ -12828,7 +12854,8 @@
       "pressure_error_Pa": 1.4677061699330807e-07,
       "dP_drho_min": 2833.6130412218945,
       "accepted": false,
-      "reason": "fractions,residual"
+      "reason": "fractions,residual",
+      "primal_infeasibility": 1.6998624730035772e-12
      }
     ]
    }
@@ -12936,7 +12963,7 @@
   "simulation": {
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 6,
-   "wall_s": 0.0387949550004123,
+   "wall_s": 0.03324417999999696,
    "objective_USD_per_yr": 419008.2803967104,
    "decisions": [
     600,
@@ -12969,7 +12996,7 @@
    "start_square_solve": "convergenceCriteriaSatisfied",
    "termination": "convergenceCriteriaSatisfied",
    "iterations": 22,
-   "wall_s": 0.07026789399969857,
+   "wall_s": 0.06067204099997525,
    "objective_USD_per_yr": 312674.2455516808,
    "decisions": [
     500.0000000000027,
@@ -12993,5 +13020,5 @@
    }
   }
  },
- "wall_s": 1955.9310156049996
+ "wall_s": 1865.3031342689999
 }
